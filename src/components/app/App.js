@@ -4,6 +4,9 @@ import Login from "../login/login";
 import Code from "../login/code";
 import Layout from "../layout/Layout";
 import Main from "../main/Main";
+import Courses from "../courses/courses";
+import Schedule from "../schedule/schedule";
+import Settings from "../settings/settings";
 
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
@@ -11,7 +14,21 @@ const router = createBrowserRouter([
     children:[
         {
             path:'/',
-            element: <Main/>
+            element: <Main/>,
+        },
+        {
+            path:'/courses',
+            element: <Courses/>
+        }
+        ,
+        {
+            path:'/schedule',
+            element: <Schedule/>
+        }
+        ,
+        {
+            path:'/settings',
+            element: <Settings/>
         }
     ]},
     {path:"/login",Component:Login},
