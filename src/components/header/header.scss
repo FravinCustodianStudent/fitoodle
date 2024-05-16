@@ -1,0 +1,59 @@
+@import "../shared/shared";
+
+.header{
+  header{
+    padding-top: 32px;
+    padding-left: 30px;
+    padding-right: 45px;
+  }
+  &__avatar{
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: $mainColour;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  nav{
+    margin-top: 60px;
+  }
+  &__nav{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    .active{
+      background-color: $mainColour;
+      svg{
+        fill: white;
+      }
+      &::after{
+        position: absolute;
+        width: 70px;
+        height: 70px;
+        content: "";
+        border-radius: 30px;
+        transform: translateX(-5px) translateY(5px);
+        z-index: -1;
+        background-color: #D90429;
+      }
+    }
+    &__item{
+      margin-bottom: 50px;
+      width: 70px;
+      height: 70px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 30px;
+      transition: .5s;
+      .svg{
+          height: 34px;
+          width: 33px;
+          fill: $gray;
+      }
+    }
+  }
+
+}

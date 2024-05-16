@@ -1,0 +1,77 @@
+@import "../shared/shared";
+.main{
+  flex: 1;
+  &__name{
+    margin-top: 45px;
+    font-size: 36px;
+    font-weight: 500;
+    a{
+      color: $mainColour;
+      transition: .5s all;
+      position: relative;
+      &:hover{
+        color: $contrastRed;
+        &::after{
+          background: $contrastRed;
+        }
+      }
+      &::after{
+        position: absolute;
+        content: "";
+        width: 100%;
+        height: 5px;
+        transition: .5s all;
+        background: $mainColour;
+        bottom: -5px;
+        left: 0;
+      }
+    }
+  }
+  &__content{
+    margin-top: 55px;
+    display: flex;
+    &__tasks{
+      &__info{
+        display: flex;
+        &__name{
+          display: flex;
+          align-items: center;
+          &__text{
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px ;
+          }
+          &__count{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: $gray;
+            font-weight: 500;
+            font-size: 16px ;
+          }
+        }
+        &__search{
+          margin-left: 42px;
+          .ui.input>input{
+            border-radius: 17px;
+          }
+          .ui.input>input:focus{
+            border-color: $mainColour;
+          }
+        }
+      }
+      &__list{
+        margin-top: 20px;
+        overflow-y: auto;
+        height: 760px;
+        width: 800px;
+      }
+    }
+  }
+}
