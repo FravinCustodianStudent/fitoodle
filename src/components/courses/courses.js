@@ -15,6 +15,10 @@ const Courses = () =>{
                     <div className="courses__content__cousrses__name">Курси <HandySvg src={courseSrc} courseName="svg"/></div>
                     <div className="courses__content__cousrses__list">
                     <Course/>
+                        <Course/>
+                        <Course/>
+                        <Course/>
+                        <Course/>
                 </div>
 
 

@@ -12,7 +12,7 @@ const Course = () =>{
                     <HandySvg src={accountSrc}/>  Прокопенко Максим Васильович
                 </div>
             </div>
-            <div className="course__button"><HandySvg src={arrowSrc}/></div>
+            <a href=""><div className="course__button"><HandySvg src={arrowSrc}/></div></a>
         </div>
     )
 }
