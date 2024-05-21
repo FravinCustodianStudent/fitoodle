@@ -1,0 +1,105 @@
+@import "../../shared/shared";
+.class{
+  &__details{
+   &__header{
+     margin-top: 32px;
+     display: flex;
+     &__info{
+       position: relative;
+       padding: 25px 20px;
+       background-color: $subColour;
+       border-radius: 13px;
+       max-width: 700px;
+       box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+      h1{
+        font-size: 40px;
+        font-weight: 900;
+        color: $mainColour;
+      }
+       h3{
+         margin-top: 10px;
+        color: $darkGray;
+         font-size: 16px;
+       }
+       &::after{
+         position: absolute;
+         content: "";
+         height: 100%;
+         right: 0;
+         top: 0;
+         width: 30px;
+         border-radius:  0 13px 13px 0;
+         background-color: $mainColour;
+       }
+     }
+     &__details{
+       width: 395px;
+       padding:  50px 40px;
+       margin-left: 50px;
+       display: flex;
+       background-color: $subColour;
+       border-radius: 13px;
+       position: relative;
+       box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+       &::after{
+         width: 100%;
+         position: absolute;
+         height: 12px;
+         background-color: $mainColour;
+         content: "";
+         left: 0;
+         top: 0;
+         border-radius: 13px 13px 0 0;
+       }
+       &__content{
+         &__header{
+           font-size: 16px;
+           color: $darkGray;
+         }
+         &__mark{
+           font-size: 40px;
+           color: $mainColour;
+           font-weight: 700;
+           margin-top: 15px;
+         }
+       }
+       &__icon{
+         flex: 1;
+         display: flex;
+         justify-content: center;
+         align-items: flex-start;
+          &__svg{
+            width: 74px;
+            height: 74px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color:$mainColour;
+            svg{
+              fill: white;
+              width: 44px;
+              height: 44px;
+            }
+          }
+
+       }
+     }
+   }
+    &__content{
+      margin-top: 22px;
+      &__list{
+        &__header{
+          font-size: 24px;
+          font-weight: 500;
+          color: $mainColour;
+          margin-bottom: 25px;
+        }
+        &__content{
+
+        }
+      }
+
+    }
+  }
+}
