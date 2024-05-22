@@ -1,0 +1,28 @@
+@import "../../shared/shared";
+
+.assignment__main__description__task{
+  &__item{
+    display: flex;
+    align-items: center;
+    background: $mainColour;
+    width: 280px;
+    padding: 7px;
+    border-radius: 10px;
+    &__icon{
+      display: flex;
+      align-items: center;
+      svg{
+        width: 24px;
+        height: 24px;
+        fill: white;
+      }
+
+      margin-right: 7px;
+
+    }
+    &__name{
+      color: white;
+    }
+  }
+
+}

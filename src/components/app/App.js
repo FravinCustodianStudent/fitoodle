@@ -1,5 +1,5 @@
 import '../../styles/App.scss';
-import {createBrowserRouter, Route, Router, RouterProvider} from "react-router-dom";
+import {createBrowserRouter, RouterProvider} from "react-router-dom";
 import Login from "../login/login";
 import Code from "../login/code";
 import Layout from "../layout/Layout";
@@ -8,6 +8,7 @@ import Courses from "../courses/courses";
 import Schedule from "../schedule/schedule";
 import Settings from "../settings/settings";
 import CourseDetails from "../courses/courseDetails/courseDetails";
+import Assignment from "../tasks/assignment";
 
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
         {
             path:'/courses/:courseId',
             element: <CourseDetails/>
+        },
+        {
+            path:'/task/:taskId',
+            element: <Assignment/>
         }
         ,
         {
