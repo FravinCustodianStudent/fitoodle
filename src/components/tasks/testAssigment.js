@@ -1,8 +1,8 @@
-
+import "./assignment.scss";
 const TestAssigment = () =>{
     return(
         <div >
-            344
+            TestAssigment
         </div>
     )
 }
