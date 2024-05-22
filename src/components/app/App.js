@@ -9,6 +9,7 @@ import Schedule from "../schedule/schedule";
 import Settings from "../settings/settings";
 import CourseDetails from "../courses/courseDetails/courseDetails";
 import Assignment from "../tasks/assignment";
+import TestAssigment from "../tasks/testAssigment";
 
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
@@ -27,8 +28,12 @@ const router = createBrowserRouter([
             element: <CourseDetails/>
         },
         {
-            path:'/task/:taskId',
+            path:'/courses/task/:taskId',
             element: <Assignment/>
+        },
+        {
+            path:'/courses/task/test/:testId',
+            element: <TestAssigment/>
         }
         ,
         {
