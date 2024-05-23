@@ -1,0 +1,59 @@
+@import "../shared/shared";
+.schedule{
+  margin-top: 35px;
+  flex: 1;
+  &__header{
+    display: flex;
+    align-items: center;
+    &__name{
+      font-size: 36px;
+      span{
+        font-weight: 700;
+      }
+    }
+    &__buttons{
+      margin-left: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      fill: $mainColour;
+      &__left{
+        svg{
+          width: 45px;
+          height: 45px;
+        }
+      }
+      &__right{
+        svg{
+          width: 45px;
+          height: 45px;
+        }
+      }
+    }
+  }
+  &__content{
+    flex: 1;
+    margin-top: 50px;
+    display: flex;
+    &__timer{
+      width: 149px;
+    }
+    &__desk{
+      flex: 1;
+      &__header{
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: 1fr;
+
+      }
+      &__row{
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: 1fr;
+      }
+    }
+  }
+
+}

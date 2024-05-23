@@ -1,0 +1,148 @@
+@import "../../shared/shared";
+
+.schedule__content__desk__row__item{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 25px;
+  padding-bottom: 25px;
+  border-bottom: 2px solid $gray;
+  &__task{
+    width: 220px;
+    height: 155px;
+    border-radius: 15px;
+    background: $subColour;
+    box-shadow: 0px 3px 3px 0px rgba(0, 0, 0, 0.25);
+    padding: 14px;
+    &__name{
+      font-weight: 800;
+      color: $mainColour;
+      border-bottom: 1px solid $mainColour;
+    }
+    &__teacher{
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      &__icon{
+        margin-right: 6px;
+        svg{
+          width: 18px;
+          height: 18px;
+          fill: $darkGray;
+        }
+      }
+      &__name{
+        color:$darkGray;
+      }
+    }
+    &__type{
+      display: flex;
+      align-items: center;
+      margin-top: 7px;
+      &__icon{
+        margin-right: 6px;
+        display: flex;
+        align-items: center;
+        svg{
+          width: 18px;
+          max-height: 18px;
+          fill: $darkGray;
+        }
+      }
+      &__name{
+        color: $darkGray;
+      }
+    }
+    &__info{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 7px;
+      &__additional{
+        color: $mainColour;
+      }
+      &__button{
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: $mainColour;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        svg{
+          width: 14px;
+          height: 14px;
+          fill: white;
+        }
+      }
+    }
+  }
+  .active-schedule__task{
+  background: $mainColour;
+  .schedule__content__desk__row__item__task__name{
+    color: white;
+    border-bottom: 2px solid white;
+  }
+    .schedule__content__desk__row__item__task__teacher{
+      &__icon{
+        svg{
+          fill: $gray;
+        }
+
+      }
+      &__name{
+        color: $gray;
+      }
+    }
+    .schedule__content__desk__row__item__task__type{
+      &__icon{
+        svg{
+          fill: $gray;
+        }
+      }
+      &__name{
+        color: $gray;
+      }
+    }
+    .schedule__content__desk__row__item__task__info{
+      &__additional{
+        color: white;
+      }
+      &__button{
+        background: white;
+        svg{
+          fill: $mainColour;
+        }
+      }
+    }
+  }
+  .importantTask{
+      position: relative;
+      padding: 14px;
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 22px;
+        height: 22px;
+        background: $contrastRed;
+        border-radius: 0 15px 0 50px;
+      }
+    }
+  &__holiday{
+    padding: 9px 13px ;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0px 3px 3px 0px rgba(0, 0, 0, 0.25);
+    background: $subColour;
+    border-radius: 15px;
+    font-weight: 200;
+    color: $darkGray;
+  }
+  &__spacer{
+    height: 155px;
+    width: 220px;
+  }
+}
