@@ -22,10 +22,27 @@ const Schedule = () =>{
             </div>
             <div className="schedule__content">
                 <div className="schedule__content__timer">
-                    <div className="schedule__content__time">
+                    <div className="schedule__content__timer__time">
                         9.00 - 10.20
                     </div>
-
+                    <div className="schedule__content__timer__time">
+                        9.00 - 10.20
+                    </div>
+                    <div className="schedule__content__timer__time active-timer">
+                        9.00 - 10.20
+                    </div>
+                    <div className="schedule__content__timer__time">
+                        9.00 - 10.20
+                    </div>
+                    <div className="schedule__content__timer__time">
+                        9.00 - 10.20
+                    </div>
+                    <div className="schedule__content__timer__time">
+                        9.00 - 10.20
+                    </div>
+                    <div className="schedule__content__timer__time">
+                        9.00 - 10.20
+                    </div>
                 </div>
                 <div className="schedule__content__desk">
                     <div className="schedule__content__desk__header">
@@ -58,6 +75,22 @@ const Schedule = () =>{
                         <ScheduleTask typeOfTask="task"/>
                         <ScheduleTask typeOfTask="task"/>
                         <ScheduleTask/>
+                        <ScheduleTask/>
+                    </div>
+                    <div className="schedule__content__desk__row">
+                        <ScheduleTask/>
+                        <ScheduleTask typeOfTask="task" />
+                        <ScheduleTask/>
+                        <ScheduleTask/>
+                        <ScheduleTask typeOfTask="task"/>
+                        <ScheduleTask/>
+                    </div>
+                    <div className="schedule__content__desk__row">
+                        <ScheduleTask/>
+                        <ScheduleTask typeOfTask="task" />
+                        <ScheduleTask/>
+                        <ScheduleTask/>
+                        <ScheduleTask typeOfTask="task"/>
                         <ScheduleTask/>
                     </div>
                     <div className="schedule__content__desk__row">

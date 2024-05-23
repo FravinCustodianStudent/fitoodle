@@ -37,6 +37,34 @@
     display: flex;
     &__timer{
       width: 149px;
+      &__time{
+        display: flex;
+        justify-content: flex-end;
+        font-weight: 300;
+        font-size: 20px;
+        margin-right: 20px;
+        color: $darkGray;
+        margin-top: 188px;
+        position: relative;
+        &:first-child{
+          margin-top: 89px;
+          transform: translateY(0);
+        }
+      }
+      .active-timer{
+        font-weight: 500;
+        color: $mainColour;
+        align-items: center;
+        &::before{
+          position: absolute;
+          content: "";
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background-color: $contrastRed;
+          left: 0;
+        }
+      }
     }
     &__desk{
       flex: 1;
