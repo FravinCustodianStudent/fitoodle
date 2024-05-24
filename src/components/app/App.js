@@ -10,6 +10,7 @@ import Settings from "../settings/settings";
 import CourseDetails from "../courses/courseDetails/courseDetails";
 import Assignment from "../tasks/assignment";
 import TestAssigment from "../tasks/testAssigment";
+import TestPage from "../tests/testPage";
 
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
@@ -44,6 +45,10 @@ const router = createBrowserRouter([
         {
             path:'/settings',
             element: <Settings/>
+        },
+        {
+            path:'/courses/task/test/:testId/:questionId',
+            element: <TestPage/>
         }
     ]},
     {path:"/login",Component:Login},

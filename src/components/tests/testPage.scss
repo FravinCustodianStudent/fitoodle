@@ -1,0 +1,224 @@
+@import "../shared/shared";
+
+.question{
+  flex: 1;
+  &__header{
+    margin-top: 60px;
+    &__timer{
+      display: flex;
+      width: 485px;
+      background: $subColour;
+      box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+      padding: 20px 40px 20px 15px  ;
+      align-items: center;
+      border-radius: 13px;
+      position: relative;
+      &::after{
+        position: absolute;
+        content: "";
+        z-index: 1;
+        width: 145px;
+        right: 0;
+        top: 0;
+        height: 100%;
+        border-radius: 0 13px 13px 0;
+        background-color: $mainColour;
+      }
+      &__name{
+        display: flex;
+        align-items: center;
+        font-size: 20px;
+        color:$mainColour;
+        font-weight: 600;
+        margin-right: 130px;
+        &__icon{
+          display: flex;
+          align-items: center;
+          margin-right: 9px;
+          svg{
+            width: 28px;
+            height: 28px;
+            fill: $mainColour;
+
+          }
+        }
+      }
+      &__content{
+        z-index: 2;
+        color: white;
+        font-weight: 700;
+        font-size: 24px;
+      }
+    }
+    &__list{
+      display: flex;
+      margin-top: 55px;
+      &__item{
+        width: 43px;
+        height: 43px;
+        position: relative;
+        margin-right: 20px;
+        &__content{
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          font-size: 20px;
+          color: $mainColour;
+          font-weight: 800;
+          width: 100%;
+          height: 100%;
+          box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+          border-radius: 10px;
+
+          z-index: 5;
+        }
+
+      }
+      .active__question{
+        .question__header__list__item__content{
+          background-color: $mainColour;
+          color: white;
+        }
+
+        &::before{
+          position: absolute;
+          z-index: -1;
+          height: 100%;
+          width: 100%;
+          left: -5px;
+          border-radius: 10px;
+          bottom: -5px;
+          content: "";
+          background-color: $contrastRed;
+        }
+      }
+    }
+  }
+  &__main{
+    margin-top: 50px;
+    display: flex;
+    &__info{
+      &__header{
+
+        width: 800px;
+        background-color: $subColour;
+        box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+        padding: 25px 18px 23px;
+        border-radius: 10px;
+        &__content{
+          display: flex;
+          padding-bottom: 10px;
+          border-bottom: 2px solid $mainColour;
+          border-radius: 2px;
+          &__name{
+            color: $darkGray;
+            font-weight: 400;
+            font-size: 16px;
+          }
+          &__icon{
+            margin-right: 7px;
+            svg{
+              width: 20px;
+              height: 20px;
+              fill: $mainColour;
+            }
+          }
+        }
+
+      }
+      &__content{
+        display: flex;
+        gap: 100px;
+        justify-content: space-between;
+        flex: 1;
+        &__descr{
+          display: flex;
+          flex-direction: column;
+          width: 330px;
+          margin-top: 15px;
+
+        }
+      }
+    }
+    &__answer{
+      margin-left: 100px;
+      width: 340px;
+      &__content{
+        width: 100%;
+        padding: 20px 25px;
+        background-color: $subColour;
+        box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+        border-radius: 10px;
+        &__header{
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          grid-template-rows: 1fr;
+          align-items: center;
+          &__item{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: $mainColour;
+            font-weight: 800;
+            font-size: 24px;
+            width: 43px;
+            height: 43px;
+            svg{
+              fill: $mainColour;
+              width: 23px;
+              height: 23px;
+            }
+          }
+        }
+        &__row{
+          display: grid;
+          margin-top: 20px;
+          grid-template-columns: repeat(5, 1fr);
+          grid-template-rows: 1fr;
+          &__number{
+            width: 43px;
+            height: 43px;
+            display: flex;
+            justify-content: center;
+            color: $mainColour;
+            font-weight: 800;
+            font-size: 24px;
+            align-items: center;
+          }
+          &__item{
+            width: 43px;
+            height: 43px;
+            display: flex;
+            border: 1px solid $mainColour;
+            border-radius: 10px;
+          }
+          .selected__answer{
+            background-color: $mainColour;
+          }
+        }
+
+      }
+      &__container{
+        width: 100%;
+        margin-top: 45px;
+        display: flex;
+        justify-content: flex-end;
+        &__button{
+          width: 43px;
+          height: 43px;
+          background-color: $mainColour;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border-radius: 11px;
+          svg{
+            width: 14px;
+            height: 14px;
+            fill: white;
+          }
+        }
+      }
+    }
+  }
+
+}
