@@ -101,6 +101,14 @@ const Schedule = () =>{
                         <ScheduleTask typeOfTask="task"/>
                         <ScheduleTask/>
                     </div>
+                    <div className="schedule__content__desk__row">
+                        <ScheduleTask/>
+                        <ScheduleTask typeOfTask="task" />
+                        <ScheduleTask/>
+                        <ScheduleTask/>
+                        <ScheduleTask typeOfTask="task"/>
+                        <ScheduleTask/>
+                    </div>
                 </div>
             </div>
 
