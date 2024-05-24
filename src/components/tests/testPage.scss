@@ -124,19 +124,59 @@
             }
           }
         }
-
+        &__description{
+          margin-top: 11px;
+          font-size: 20px;
+          font-weight: 500;
+        }
       }
       &__content{
         display: flex;
-        gap: 100px;
         justify-content: space-between;
         flex: 1;
         &__descr{
           display: flex;
           flex-direction: column;
-          width: 330px;
+          width: 375px;
           margin-top: 15px;
 
+        }
+      }
+      &__container{
+        width: 100%;
+        margin-top: 45px;
+        display: flex;
+        justify-content: flex-end;
+        &__button{
+          height: 50px;
+          background-color: $mainColour;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border-radius: 11px;
+          font-size: 16px;
+          font-weight: 600;
+          color: white;
+          padding: 0 15px;
+          svg{
+            width: 18px;
+            height: 18px;
+            fill: white;
+            margin-left: 10px;
+          }
+        }
+        &__button-text{
+          height: 50px;
+          border: 1px solid $mainColour;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border-radius: 11px;
+          font-size: 16px;
+          padding: 0 15px;
+          color: $mainColour;
+          font-weight: 500;
+          margin-right: 50px;
         }
       }
     }
