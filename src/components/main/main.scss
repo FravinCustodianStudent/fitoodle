@@ -1,4 +1,11 @@
 @import "../shared/shared";
+.oval__loader{
+  flex: 1;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .main{
   flex: 1;
   &__name{

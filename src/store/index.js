@@ -3,7 +3,9 @@ import userSlice from "../slices/userSlice";
 
 
 const store = configureStore({
-    reducer:{userSlice},
+    reducer:{
+        users:userSlice,
+    },
     middleware:getDefaultMiddleware=> getDefaultMiddleware(),
     devTools:process.env.NODE_ENV !== 'production'
 });

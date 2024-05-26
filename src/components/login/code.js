@@ -2,34 +2,35 @@ import {useNavigate, useSearchParams} from "react-router-dom";
 import {useEffect, useState} from "react";
 import {useHttp} from "../../hooks/http.hook";
 import "./login.scss";
-import {userLoaded} from "../../slices/userSlice";
+import {setUser} from "../../slices/userSlice";
 import {useDispatch} from "react-redux";
 
 const Code = () => {
 
-    const {Auth,GET} = useHttp()
+    const {Auth,GET} = useHttp();
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const [searchParams, setSearchParams] = useSearchParams();
-    useEffect(()=>{
-      const code = searchParams.get("code");
-      console.log(code)
-        // {"Authorization":`Bearer ${code}`}
-        Auth("auth/login",code)
+    const [searchParams] = useSearchParams();
+    const Login = (code) =>{
+        Auth("auth/google/authentication",code)
             .then((res)=>{
-
-                console.log(res)
-                console.log(res.body)
-               GET(null,"/auth/login",{"authorization":res.headers.authorization})
-                   .then((res)=>{
-                       console.log(res)
-                       dispatch(userLoaded(res.data))
-                       navigate("/")
-                   })
+                GET(null,"authresource/auth/login",{"Authorization":res.headers.authorization})
+                    .then((res)=>{
+                        dispatch(setUser(res.data))
+                        console.log(res.data)
+                        localStorage.setItem("jwt",res.headers.authorization);
+                        console.log(localStorage.getItem("jwt"))
+                        navigate("/")
+                    })
             })
             .catch((err)=>{
                 console.log(err)
             })
+    }
+
+    useEffect(()=>{
+      const code = searchParams.get("code");
+      Login(code);
     })
 
     return(

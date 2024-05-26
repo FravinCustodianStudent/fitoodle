@@ -1,26 +1,26 @@
 import {createSlice} from "@reduxjs/toolkit";
 
 const initialState = {
-    user : {},
+    user: {},
     status: "unlogged"
-}
+};
 
 const userSlice = createSlice({
-    name: 'user',
+    name: 'users',
     initialState,
-    reducers:{
-        userLoaded: (state,action) => {state.user = action.payload
-            state.status = "logged"
+    reducers: {
+        setUser: (state, action) => {
+            state.user = action.payload;
+            state.status = "logged";
         },
-        userDeleted:(state)=>{state.user = null
-            state.status = "unlogged"}
+        deleteUser: (state) => {
+            state.user = {};
+            state.status = "unlogged";
+        }
     }
-})
+});
 
-const {actions, reducer} = userSlice;
+export const { setUser, deleteUser } = userSlice.actions;
+export default userSlice.reducer;
 
-export default reducer;
-export const {
-    userLoaded,
-    userDeleted,
-} = actions;
+// Создаем селекторы для получения данных из состояния
