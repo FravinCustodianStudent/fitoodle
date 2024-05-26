@@ -2,7 +2,9 @@ html{
   overflow-y: hidden;
 }
 .App{
-
+  @media (max-width: 1460px) {
+    justify-content: center;
+  }
   display: flex;
 
   height: 100vh;
@@ -15,11 +17,11 @@ html{
     align-items: center;
     &__logo{
       display: flex;
-      font-size: 32px;
+      font-size: 36px;
       justify-content: center;
       align-items: center;
       gap: 20px;
-      font-weight: 500;
+      font-weight: 700;
       &__item{
         width: 83px;
         height: 83px;
@@ -35,7 +37,7 @@ html{
     }
     &__header{
       margin-top: 35px;
-      font-weight: 500;
+      font-weight: 600;
       font-size: 40px;
       line-height: 40px;
       max-width: 470px;
@@ -47,6 +49,7 @@ html{
       border-radius: 11px;
       background: #D90429;
       font-size: 28px;
+      font-weight: 600;
       color: white;
       display: flex;
       justify-content: center;
@@ -68,6 +71,9 @@ html{
     }
   }
   &__bg{
+    @media (max-width: 1460px) {
+      display: none;
+    }
     position: absolute;
     right: 0%;
     height: 100%;

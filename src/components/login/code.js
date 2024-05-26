@@ -4,7 +4,7 @@ import {useHttp} from "../../hooks/http.hook";
 import "./login.scss";
 import {setUser} from "../../slices/userSlice";
 import {useDispatch} from "react-redux";
-
+import "./code.scss"
 const Code = () => {
 
     const {Auth,GET} = useHttp();
@@ -32,11 +32,30 @@ const Code = () => {
       const code = searchParams.get("code");
       Login(code);
     })
-
+    /*Ваша аутентифікація успішна - почекайте секунду.*/
     return(
-      <div>
-          Ваша аутентифікація успішна - почекайте секунду.
-
+      <div className="preloader__base">
+          <div id='preloader'>
+              <div className='spinner'>
+          <span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+                  <div className='base'>
+                      <span></span>
+                      <div className='face'></div>
+                  </div>
+              </div>
+              <div class='longfazers'>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+              </div>
+          </div>
+          <div className="preloader__base__success">Ваша аутентифiкацiя успiшна - почекайте секунду</div>
       </div>
     )
 }

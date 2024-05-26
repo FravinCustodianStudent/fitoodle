@@ -10,7 +10,6 @@ import {Oval} from "react-loader-spinner";
 
 const Main = () => {
     const user = useSelector(state => state.users.user);
-    const navigate = useNavigate();
     const dispatch = useDispatch();
     const [Loading, setLoading] = useState(true)
     const {GET} = useHttp();
@@ -36,7 +35,9 @@ const Main = () => {
                                        // console.log(Tasks[0].deadline );
                                 })
                         })
-                })
+                }).catch(err=>{
+
+            })
     }
     const renderItems = arr =>{
         const items = arr.map((item, i) => {

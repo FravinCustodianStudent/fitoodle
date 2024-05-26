@@ -11,6 +11,7 @@ import CourseDetails from "../courses/courseDetails/courseDetails";
 import Assignment from "../tasks/assignment";
 import TestAssigment from "../tasks/testAssigment";
 import TestPage from "../tests/testPage";
+import ErrorBoundry from "../error/ErrorBoundry";
 
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
@@ -22,33 +23,37 @@ const router = createBrowserRouter([
         },
         {
             path:'/courses',
-            element: <Courses/>
+            element: <Courses/>,
         },
         {
             path:'/courses/:courseId',
-            element: <CourseDetails/>
+            element: <CourseDetails/>,
         },
         {
             path:'/courses/task/:taskId',
-            element: <Assignment/>
+            element: <Assignment/>,
         },
         {
             path:'/courses/task/test/:testId',
-            element: <TestAssigment/>
+            element: <TestAssigment/>,
         }
         ,
         {
             path:'/schedule',
-            element: <Schedule/>
+            element: <Schedule/>,
         }
         ,
         {
             path:'/settings',
-            element: <Settings/>
+            element: <Settings/>,
         },
         {
             path:'/courses/task/test/:testId/:questionId',
-            element: <TestPage/>
+            element: <TestPage/>,
+        },
+        {
+            path:"*",
+            element:<ErrorBoundry/>
         }
     ]},
     {path:"/login",Component:Login},
