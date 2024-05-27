@@ -12,6 +12,8 @@ import Assignment from "../tasks/assignment";
 import TestAssigment from "../tasks/testAssigment";
 import TestPage from "../tests/testPage";
 import ErrorBoundry from "../error/ErrorBoundry";
+import LoginTest from "../login/loginTest";
+import LoginTestOpen from "../login/LoginTestOpen";
 
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
@@ -21,6 +23,8 @@ const router = createBrowserRouter([
             path:'/',
             element: <Main/>,
         },
+
+
         {
             path:'/courses',
             element: <Courses/>,
@@ -57,7 +61,9 @@ const router = createBrowserRouter([
         }
     ]},
     {path:"/login",Component:Login},
-    {path:"/code",Component:Code}
+    {path:"/code",Component:Code},
+    {path:"/test",Component:LoginTest},
+    {path:"/testopen",Component:LoginTestOpen}
 ]);
 function App() {
   return (

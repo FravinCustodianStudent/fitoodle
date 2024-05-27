@@ -1,0 +1,327 @@
+@mixin button($bcolor,
+$url,
+$x1,
+$y1,
+$bor,
+$col) {
+  background: $bcolor;
+  -webkit-mask: url($url);
+  mask: url($url);
+  -webkit-mask-size: $x1 $y1;
+  mask-size: $x1 $y1;
+  border: $bor;
+  color: $col;
+}
+html{
+  overflow-y: hidden;
+}
+body{
+  background: #141414;
+  overflow:hidden;
+}
+canvas{
+  position:absolute;
+  top:0;
+  left:0;
+}
+.App{
+    justify-content: center;
+  display: flex;
+  align-items: center;
+  height: 100vh;
+  &__main{
+    z-index: 999;
+    background: white;
+    display: flex;
+    width: 500px;
+    height: fit-content;
+    justify-content: center;
+    border-radius: 15px;
+    padding: 35px 40px;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+
+    flex-direction: column;
+    align-items: center;
+    &__logo{
+      display: flex;
+      font-size: 36px;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      font-weight: 700;
+      &__item{
+        width: 83px;
+        height: 83px;
+        font-weight: 700 ;
+        display: flex;
+        color: white;
+        border-radius: 17px;
+        justify-content: center;
+        align-items: center;
+        background: #D90429
+      ;
+      }
+    }
+    &__header{
+      margin-top: 35px;
+      font-weight: 600;
+      font-size: 40px;
+      line-height: 40px;
+      max-width: 470px;
+      text-align: center;
+    }
+    &__button{
+      height: 77px;
+      width: 420px;
+      border-radius: 11px;
+      background: #D90429;
+      font-size: 28px;
+      font-weight: 600;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 60px;
+      cursor: pointer;
+      box-shadow: 0px 1px 5px 1px rgba(0,0,0,0.21);
+      transition: .5s all;
+      &:hover{
+        box-shadow: 0px 5px 20px 4px rgba(0,0,0,0.2);
+      }
+    }
+    &__subHeader{
+      margin-top: 30px;
+      font-weight: 300;
+      font-size: 20px;
+      max-width: 470px;
+      text-align: center;
+    }
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@import url('https://fonts.googleapis.com/css?family=Lato:100,300,400');
+@import url('https://fonts.googleapis.com/css?family=Roboto:100');
+
+@mixin button($bcolor,
+$url,
+$x1,
+$y1,
+$bor,
+$col) {
+  background: $bcolor;
+  -webkit-mask: url($url);
+  mask: url($url);
+  -webkit-mask-size: $x1 $y1;
+  mask-size: $x1 $y1;
+  border: $bor;
+  color: $col;
+}
+
+.header {
+  text-align: center;
+  font-family: 'Roboto', sans-serif;
+  font-size: 34px;
+  margin-top: 12vh;
+}
+
+.footer {
+  text-align: center;
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  font-size: 20px;
+  margin-top: 15vh;
+}
+
+.button-container-1 {
+  position: relative;
+  width: 350px;
+  height: 55px;
+  margin-top: 50px;
+  overflow: hidden;
+  box-shadow: 0px 1px 5px 1px rgba(0,0,0,0.21);
+  border: 1px solid;
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  transition: 0.5s;
+  letter-spacing: 1px;
+  border-radius: 8px;
+
+  button {
+    width: 101%;
+    height: 100%;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 1px;
+
+    @include button(#D90429,
+            "https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png",
+            2300%,
+            100%,
+            none,
+            #fff);
+    cursor: pointer;
+    -webkit-animation: ani2 0.7s steps(22) forwards;
+    animation: ani2 0.7s steps(22) forwards;
+
+    &:hover {
+      -webkit-animation: ani 0.7s steps(22) forwards;
+      animation: ani 0.7s steps(22) forwards;
+    }
+  }
+}
+
+.button-container-2 {
+  position: relative;
+  width: 100px;
+  height: 50px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 7vh;
+  overflow: hidden;
+  border: 1px solid #000;
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  transition: 0.5s;
+  letter-spacing: 1px;
+  border-radius: 8px;
+
+  button {
+    width: 101%;
+    height: 100%;
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 1px;
+    font-weight: bold;
+
+    @include button(#000, "https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/urban-sprite.png",
+            3000%,
+            100%,
+            none,
+            #fff);
+    cursor: pointer;
+    -webkit-animation: ani2 0.7s steps(29) forwards;
+    animation: ani2 0.7s steps(29) forwards;
+
+    &:hover {
+      -webkit-animation: ani 0.7s steps(29) forwards;
+      animation: ani 0.7s steps(29) forwards;
+    }
+  }
+}
+
+
+.mas {
+  position: absolute;
+  color: #000;
+  text-align: center;
+  height: 100%;
+  width: 101%;
+  font-weight: 700;
+  position: absolute;
+  font-size: 20px;
+  margin-top: 17px;
+  overflow: hidden;
+
+}
+
+@-webkit-keyframes ani {
+  from {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+
+  to {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+}
+
+@keyframes ani {
+  from {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+
+  to {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+}
+
+@-webkit-keyframes ani2 {
+  from {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+
+  to {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+}
+
+@keyframes ani2 {
+  from {
+    -webkit-mask-position: 100% 0;
+    mask-position: 100% 0;
+  }
+
+  to {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+}
+
+a{
+  color:#00ff95;
+}
+
+.button-container-3 {
+  position: relative;
+  width: 100px;
+  height: 50px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 8vh;
+  overflow: hidden;
+  border: 1px solid #000;
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  transition: 0.5s;
+  letter-spacing: 1px;
+  border-radius: 8px;
+
+  button {
+    width: 101%;
+    height: 100%;
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 1px;
+    font-weight: bold;
+
+
+    @include button(#000, "https://raw.githubusercontent.com/pizza3/asset/master/natureSmaller.png",
+            7100%,
+            100%,
+            none,
+            #fff);
+    cursor: pointer;
+    -webkit-animation: ani2 0.7s steps(70) forwards;
+    animation: ani2 0.7s steps(70) forwards;
+
+    &:hover {
+      -webkit-animation: ani 0.7s steps(70) forwards;
+      animation: ani 0.7s steps(70) forwards;
+    }
+  }
+}
+
