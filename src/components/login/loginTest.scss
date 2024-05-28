@@ -1,3 +1,4 @@
+
 @mixin button($bcolor,
 $url,
 $x1,
@@ -12,12 +13,8 @@ $col) {
   border: $bor;
   color: $col;
 }
-html{
-  overflow-y: hidden;
-}
 body{
   background: #141414;
-  overflow:hidden;
 }
 canvas{
   position:absolute;
@@ -127,7 +124,6 @@ $col) {
   text-align: center;
   font-family: 'Roboto', sans-serif;
   font-size: 34px;
-  margin-top: 12vh;
 }
 
 .footer {

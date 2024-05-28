@@ -7,18 +7,25 @@ import {useDispatch, useSelector} from "react-redux";
 import {useEffect, useState} from "react";
 import {useHttp} from "../../hooks/http.hook";
 import {Oval} from "react-loader-spinner";
+import {useErrorBoundary, withErrorBoundary} from "react-use-error-boundary";
 
-const Main = () => {
+const Main = withErrorBoundary(() => {
     const user = useSelector(state => state.users.user);
-    const dispatch = useDispatch();
+    const [error, setError] = useState(false)
+    const [errorH, resetError] = useErrorBoundary((error,errorInfo)=>{
+            console.log(error);
+            console.log(errorInfo)
+    }
+    )
     const [Loading, setLoading] = useState(true)
     const {GET} = useHttp();
     const [Tasks, setTasks] = useState({});
     useEffect(()=>{
-            if (Object.keys(user).length!==0){
+
+            if (Object.keys(user).length!==0 && !error ){
                 getTasks()
             }
-    },[user]);
+    },[user,error]);
 
     const getTasks = () =>{
             GET({studentId:user.id},"groupresource/groups/student",{Authorization:localStorage.getItem("jwt")})
@@ -26,26 +33,42 @@ const Main = () => {
                     console.log(res.data)
                     GET({groupId:res.data.id},"courseresource/courses/by/group",{Authorization:localStorage.getItem("jwt")})
                         .then((result)=>{
-                            GET({eduCourseId:result.data[0].id},"taskresource/tasks/by/course",{Authorization:localStorage.getItem("jwt")})
-                                .then((spacite)=>{
-                                        console.log(spacite.data)
-                                       setTasks(spacite.data);
-                                        console.log(Tasks.length)
-                                    setLoading(false);
-                                       // console.log(Tasks[0].deadline );
-                                })
+                                GET({eduCourseId:result.data[0].id},"taskresource/tasks/by/course",{Authorization:localStorage.getItem("jwt")})
+                                    .then((spacite)=>{
+                                        console.log(spacite)
+                                        console.log(spacite.data.length)
+
+                                        if (spacite.data.length!==0 && spacite.data !==null){
+                                            setTasks(spacite.data);
+                                            console.log(Tasks)
+                                            setLoading(false);
+                                            // console.log(Tasks[0].deadline );
+                                        }else {
+                                            setLoading(false)
+                                            setError(true)
+                                        }
+
+                                    })
+
                         })
                 }).catch(err=>{
+                    console.log(err)
+                setLoading(false)
+                setError(true)
 
             })
     }
     const renderItems = arr =>{
-        const items = arr.map((item, i) => {
+        let items;
+        if (!error){
+             items = arr.map((item, i) => {
 
-            return(
-                <Task id={Tasks[i].id} deadline={Tasks[i].deadline} taskName={Tasks[i].name} authorId={Tasks[i].authorId} createdAt={Tasks[i].createdAt} />
-            )
-        })
+                return(
+                    <Task id={Tasks[i].id} deadline={Tasks[i].deadline} taskName={Tasks[i].name} authorId={Tasks[i].authorId} createdAt={Tasks[i].createdAt} />
+                )
+            })
+        }
+
     return(
         <div className="main">
             <div className="main__name">
@@ -58,7 +81,9 @@ const Main = () => {
                     <div className="main__content__tasks__info">
                         <div className="main__content__tasks__info__name">
                             <div className="main__content__tasks__info__name__text">Завдання</div>
-                            <div className="main__content__tasks__info__name__count">3</div>
+                            {error ? <div className="main__content__tasks__info__name__count">0</div>:
+                                <div className="main__content__tasks__info__name__count">3</div>}
+
                         </div>
 
                         <div className="main__content__tasks__info__search">
@@ -67,7 +92,7 @@ const Main = () => {
                     </div>
                     <div className="main__content__tasks__list">
 
-                        {items}
+                        {error? "Завдань немає" : items}
                     </div>
                 </div>
                 <div className="main__content__schedule"></div>
@@ -92,5 +117,5 @@ const Main = () => {
         </>
 
     )
-}
+});
 export default Main;

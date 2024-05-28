@@ -7,14 +7,20 @@ import {useEffect, useState} from "react";
 import {useHttp} from "../../../hooks/http.hook";
 import {Oval} from "react-loader-spinner";
 import courses from "../courses";
-const CourseDetails = () =>{
+import {withErrorBoundary} from "react-use-error-boundary";
+import {useSelector} from "react-redux";
+const CourseDetails = withErrorBoundary(() =>{
     const {GET} = useHttp();
+        const user = useSelector(state => state.users.user);
     const {courseId} = useParams();
     const [course, setCourse] = useState();
     const [teacher, setTeacher] = useState()
     const [teacherName, setTeacherName] = useState()
     const [Loading, setLoading] = useState(true)
-    const [Tasks, setTasks] = useState()
+    const [Tasks, setTasks] = useState();
+    const [Marks, setMarks] = useState();
+    const [Result, setResult] = useState()
+    const navigate = useNavigate();
     useEffect(() => {
         getCourseData(courseId)
     }, []);
@@ -27,21 +33,35 @@ const CourseDetails = () =>{
                         const authorFullName = result.data.firstName + " " + result.data.lastName;
                         setTeacherName(authorFullName);
                         setTeacher(result.data)
-                        setLoading(false)
+
                         GET({eduCourseId:res.data.id},"taskresource/tasks/by/course",{Authorization:localStorage.getItem("jwt")})
                             .then((spacite)=>{
                                     setTasks(spacite.data);
+                                    GET({},`taskresource/taskResult/by/user?userId=${user.id}`,{Authorization:localStorage.getItem("jwt")})
+                                        .then((taskResuslts)=>{
+                                            setResult(taskResuslts.data);
+                                            GET({},`taskresource/marks/by/user/${user.id}`,{Authorization:localStorage.getItem("jwt")})
+                                                .then((marks)=>{
+                                                    setMarks(marks.data);
+                                                    setLoading(false)
+                                                })
+                                        })
                             })
                     });
-            });
+            }).catch((err)=>{
+                console.log(err)
+                if (err.response.status===404){
+                    navigate("/**")
+                }
+        });
     }
     //TODO пнуть Максима за говно на апи по таск резаоту
     const renderItems = arr =>{
-        // const items = arr.map((item, i) => {
-        //     return(
-        //         <CourseListItem/>
-        //     )
-        // })
+        const items = arr.map((item, i) => {
+            return(
+                <CourseListItem mark={Marks[i]} task={Tasks[i]} taskId={Tasks[i].id}/>
+            )
+        })
         return <>
             <div className="class">
                 <div className="class__details">
@@ -69,7 +89,7 @@ const CourseDetails = () =>{
                         <div className="class__details__content__list">
                             <div className="class__details__content__list__header">Tasks</div>
                             <div className="class__details__content__list__content">
-                                {/*{items}*/}
+                                {items}
                             </div>
                         </div>
                     </div>
@@ -91,5 +111,5 @@ const CourseDetails = () =>{
 
     )
 }
-
+)
 export default CourseDetails;

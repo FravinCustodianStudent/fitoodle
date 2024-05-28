@@ -7,9 +7,7 @@ const Layout = () => {
     return(
         <div className="app">
             <Header></Header>
-            <ErrorBoundary FallbackComponent={<ErrorBoundry/>}>
                 <Outlet />
-            </ErrorBoundary>
 
         </div>
     )

@@ -12,7 +12,8 @@ const Task = ({id,taskName,deadline,createdAt,authorId}) =>{
     },[])
     const CompareDates = (deadline)=>{
         const today = new Date();
-        if (new Date(deadline)>today){
+        const [year, month, day] = deadline.split('-').map(Number);
+        if (new Date(year, month - 1, day)<today){
             return true;
         }
     }
@@ -24,8 +25,15 @@ const Task = ({id,taskName,deadline,createdAt,authorId}) =>{
             });
     }
     const ConvertDate = (date) =>{
-        const unformattedDate = new Date(date);
-        const readyDate = `${unformattedDate.getDay()}.${unformattedDate.getMonth()}.${unformattedDate.getFullYear()}`
+
+        const [datePart, timePart] = date.split('T')
+
+        const [year, month, day] = datePart.split('-').map(Number);
+        console.log(new Date(year, month - 1, day))
+        const unformattedDate = new Date(year, month - 1, day);
+        const readyDate = `${unformattedDate.getDay()<10?"0"+unformattedDate.getDay():unformattedDate.getDay()}.${
+            unformattedDate.getMonth()+1<10?"0"+(unformattedDate.getMonth()+1):(unformattedDate.getMonth()+1)}.${
+            unformattedDate.getFullYear()}`
         return readyDate;
     }
     return(

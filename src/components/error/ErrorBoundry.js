@@ -17,7 +17,7 @@ const ErrorBoundry = () =>{
                         <img src="https://cdn.rawgit.com/ahmedhosna95/upload/1731955f/sad404.svg" alt="404"/>
                         <span> 404</span>
                         <p className="p-a">Сторінка не знайдена</p>
-                        <Link to={"/"} className="back">На головну</Link>
+                        <Link to={"/"} className="back"><p>На головну</p></Link>
                     </div>
                 </div>
 

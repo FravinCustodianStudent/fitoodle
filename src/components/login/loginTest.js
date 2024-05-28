@@ -9,7 +9,7 @@ const LoginTest = () =>{
         start();
     }, []);
     return(
-        <div className="containerLogin">
+        <div style={{background:"white"}} className="containerLogin">
             <motion.div className="App" >
                 <motion.div className="App__main"
                             animate={{

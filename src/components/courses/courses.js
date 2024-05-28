@@ -7,14 +7,17 @@ import {useEffect, useState} from "react";
 import {useHttp} from "../../hooks/http.hook";
 import {Link} from "react-router-dom";
 import {Oval} from "react-loader-spinner";
-const Courses = () =>{
+import {withErrorBoundary} from "react-use-error-boundary";
+const Courses = withErrorBoundary(() =>{
     const {GET} = useHttp();
     const user = useSelector(state => state.users.user);
     const [Courses, setCourses] = useState()
     const [Loading, setLoading] = useState(true)
+    const [error, setError] = useState(false)
     useEffect(()=>{
-            GetCourses();
-    },[user]);
+        if (!error) GetCourses();
+
+    },[user,error]);
     const GetCourses=()=>{
         if (Object.keys(user).length!==0){
             GET({studentId:user.id},"groupresource/groups/student",{Authorization:localStorage.getItem("jwt")})
@@ -27,16 +30,24 @@ const Courses = () =>{
                         })
 
 
-                })
+                }).catch((err)=>{
+                    console.log(err)
+                setLoading(false);
+                    setError(true)
+            })
         }
 
     }
     const renderItems = arr =>{
-        const items = arr.map((item, i) => {
-            return(
-                <Course id={Courses[i].id} nameOfCourse={Courses[i].name} idOfTeacher={Courses[i].teacherId} />
-            )
-        })
+        let items;
+        if (!error){
+            items = arr.map((item, i) => {
+                return(
+                    <Course id={Courses[i].id} nameOfCourse={Courses[i].name} idOfTeacher={Courses[i].teacherId} />
+                )
+            })
+        }
+
         return <>
             <div className="courses__name">
                 <h1>
@@ -47,7 +58,7 @@ const Courses = () =>{
                 <div className="courses__content__cousrses">
                     <div className="courses__content__cousrses__name">Курси <HandySvg src={courseSrc} courseName="svg"/></div>
                     <div className="courses__content__cousrses__list">
-                        {items}
+                        {!error? items:"курсів немає"}
                     </div>
 
 
@@ -69,5 +80,5 @@ const Courses = () =>{
             /></div> :renderItems(Courses)}
         </div>
     )
-}
+})
 export default Courses;
