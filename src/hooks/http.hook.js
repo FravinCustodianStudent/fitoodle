@@ -18,7 +18,7 @@ export const useHttp = () =>{
             });
         },
         []);
-    const POST = useCallback(async (params,route,headers)=>{
+    const POST = useCallback(async (params,route,headers,body)=>{
 
             //TODO: Redirect if no token presented
             // if (localStorage.getItem('token') === null){
@@ -27,11 +27,14 @@ export const useHttp = () =>{
             // setProcess('loading');
             return customAxios.post(baseUrl+route,{
                 params: {...params},
-                headers: {...headers}
+                headers: {...headers},
+                data:{
+                    ...body
+                }
             });
         },
         []);
-    const PUT = useCallback(async (params,route,headers)=>{
+    const PUT = useCallback(async (params,route,headers,body)=>{
 
             //TODO: Redirect if no token presented
             // if (localStorage.getItem('token') === null){
@@ -40,7 +43,10 @@ export const useHttp = () =>{
             // setProcess('loading');
             return customAxios.put(baseUrl+route,{
                 params: {...params},
-                headers: {...headers}
+                headers: {...headers},
+                data:{
+                    ...body
+                }
             });
         },
         []);

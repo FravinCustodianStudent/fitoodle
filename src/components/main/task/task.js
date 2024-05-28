@@ -4,11 +4,25 @@ import arrowSrc from "../../../assets/arrow.svg";
 import {Link} from "react-router-dom";
 import {useHttp} from "../../../hooks/http.hook";
 import {useEffect, useState} from "react";
-const Task = ({id,taskName,deadline,createdAt,authorId}) =>{
+import {useErrorBoundary, withErrorBoundary} from "react-use-error-boundary";
+const Task = withErrorBoundary(({id,taskName,deadline,createdAt,authorId}) =>{
     const {GET} = useHttp();
     const [author, setAuthor] = useState()
-    useEffect(()=>{;
+    const [error,resetError] = useErrorBoundary();
+    const [testExisting, setTestExisting] = useState(false);
+    const [test, setTest] = useState()
+    useEffect(()=>{
        CreateAuthor(authorId);
+       GET({taskId:id},"testingresource/testConfigs/by/task",{Authorization:localStorage.getItem("jwt")})
+           .then((res)=>{
+               console.log(res);
+               if (res.data!==null){
+                   setTestExisting(true);
+                   setTest(res.data);
+               }
+           }).catch((err)=>{
+
+       })
     },[])
     const CompareDates = (deadline)=>{
         const today = new Date();
@@ -29,7 +43,6 @@ const Task = ({id,taskName,deadline,createdAt,authorId}) =>{
         const [datePart, timePart] = date.split('T')
 
         const [year, month, day] = datePart.split('-').map(Number);
-        console.log(new Date(year, month - 1, day))
         const unformattedDate = new Date(year, month - 1, day);
         const readyDate = `${unformattedDate.getDay()<10?"0"+unformattedDate.getDay():unformattedDate.getDay()}.${
             unformattedDate.getMonth()+1<10?"0"+(unformattedDate.getMonth()+1):(unformattedDate.getMonth()+1)}.${
@@ -58,11 +71,13 @@ const Task = ({id,taskName,deadline,createdAt,authorId}) =>{
                         <div className="task__action__dates__to__content">{ConvertDate(deadline)}</div>
                     </div>
                 </div>
-                <Link to={`/courses/task/${id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link>
+                {testExisting ? <Link to={`/courses/task/test/${test.id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link> :
+                    <Link to={`/courses/task/${id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link>}
+
 
             </div>
         </div>
     )
-}
+})
 
 export default Task;

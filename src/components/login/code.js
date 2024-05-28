@@ -3,7 +3,7 @@ import {useEffect, useState} from "react";
 import {useHttp} from "../../hooks/http.hook";
 import "./login.scss";
 import {setUser} from "../../slices/userSlice";
-import {useDispatch} from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import "./code.scss"
 const Code = () => {
 
@@ -11,6 +11,7 @@ const Code = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [searchParams] = useSearchParams();
+
     const Login = (code) =>{
         Auth("auth/google/authentication",code)
             .then((res)=>{

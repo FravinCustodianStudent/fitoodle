@@ -186,6 +186,13 @@
           margin-top: 15px;
 
         }
+        .multitask{
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          grid-template-rows: repeat(2, 1fr);
+          grid-column-gap: 60px;
+          grid-row-gap: 20px;
+        }
       }
       &__container{
         width: 100%;
