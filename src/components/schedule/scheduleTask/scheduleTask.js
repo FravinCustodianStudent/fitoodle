@@ -12,18 +12,16 @@ const ScheduleTask = ({typeOfTask,date,today,importance}) =>{
                 if (today) type += " active-schedule__task";
 
                 if (importance) type += type.concat(" importantTask");
-                console.log(importance)
-                console.log(type)
                 return <div className={type}>
                     <div className="schedule__content__desk__row__item__task__name">
-                        Математичні основи програмної інженерії
+                        {date.lectureName}
                     </div>
                     <div className="schedule__content__desk__row__item__task__teacher">
                         <div className="schedule__content__desk__row__item__task__teacher__icon">
                             <HandySvg src={peopleSrc}/>
                         </div>
                         <div className="schedule__content__desk__row__item__task__teacher__name">
-                            Ткаченко М.В.
+                            {date.lecturerName}
                         </div>
                     </div>
                     <div className="schedule__content__desk__row__item__task__type">
@@ -36,9 +34,9 @@ const ScheduleTask = ({typeOfTask,date,today,importance}) =>{
                     </div>
                     <div className="schedule__content__desk__row__item__task__info">
                         <div className="schedule__content__desk__row__item__task__info__additional">
-                            До 23.05
+                            До {date.deletionDate}
                         </div>
-                        <a href=""><div className="schedule__content__desk__row__item__task__info__button">
+                        <a href={date.lectureLink}><div className="schedule__content__desk__row__item__task__info__button">
                             <HandySvg src={arrowSrc}/>
                         </div></a>
 
