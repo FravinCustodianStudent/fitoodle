@@ -26,12 +26,8 @@ export const useHttp = () =>{
             // }
             // setProcess('loading');
             return customAxios.post(baseUrl+route,{
-                params: {...params},
-                headers: {...headers},
-                data:{
-                    ...body
-                }
-            });
+                ...body
+            },{headers:{...headers},params:{params}});
         },
         []);
     const PUT = useCallback(async (params,route,headers,body)=>{

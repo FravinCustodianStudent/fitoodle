@@ -90,7 +90,7 @@ const TestPage = () =>{
             if (checkExisting(answers)) {
                 const answerObject = {
                     questionId: tests.questions[currentQuestion - 1].id,
-                    answersId: [...answers,...answer]
+                    answersId: [...answer]
                 }
                 dispatch(addAnswer(answerObject));
                     setAnswer([]);
@@ -131,9 +131,11 @@ const TestPage = () =>{
             startTime:formatdDate(startTime),
             completionTime:formatdDate(new Date()),
             answers:answers,
+            completed:true,
             testMarkValue:testConfig.maxTestMark
         }
-        POST({},`testingresource/tests/${tests.id}/complete`,{Authorization:localStorage.getItem("jwt")},{...objectToCheck})
+        console.log(objectToCheck);
+        POST({},`testingresource/tests/${tests.id}/complete`,{Authorization:localStorage.getItem("jwt")},objectToCheck)
             .then((res)=>{
                 console.log(res)
             })
