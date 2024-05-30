@@ -50,33 +50,36 @@ const Task = withErrorBoundary(({id,taskName,deadline,createdAt,authorId}) =>{
         return readyDate;
     }
     return(
-        <div className={CompareDates(deadline)? "task outdated":"task"} >
-            <div className="task__info">
-                <div className="task__info__status"></div>
-                <div className="task__info__name">
-                    <div className="task__info__name__task">{taskName}</div>
-                    <div className="task__info__name__teacher">{author}</div>
-                </div>
-            </div>
-            <div className="task__action">
-                <div className="task__action__dates">
-                    <div className="task__action__dates__from">
-                        <div className="task__action__dates__from__name">Дата створення</div>
-                        <div className="task__action__dates__from__separator"></div>
-                        <div className="task__action__dates__from__content">{ConvertDate(createdAt)}</div>
-                    </div>
-                    <div className="task__action__dates__to">
-                        <div className="task__action__dates__to__name">Дата здачі</div>
-                        <div className="task__action__dates__to__separator"></div>
-                        <div className="task__action__dates__to__content">{ConvertDate(deadline)}</div>
+        <>
+            <div className={CompareDates(deadline)? "task outdated":"task"} >
+                <div className="task__info">
+                    <div className="task__info__status"></div>
+                    <div className="task__info__name">
+                        <div className="task__info__name__task">{taskName}</div>
+                        <div className="task__info__name__teacher">{author}</div>
                     </div>
                 </div>
-                {testExisting ? <Link to={`/courses/task/test/${test.id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link> :
-                    <Link to={`/courses/task/${id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link>}
+                <div className="task__action">
+                    <div className="task__action__dates">
+                        <div className="task__action__dates__from">
+                            <div className="task__action__dates__from__name">Дата створення</div>
+                            <div className="task__action__dates__from__separator"></div>
+                            <div className="task__action__dates__from__content">{ConvertDate(createdAt)}</div>
+                        </div>
+                        <div className="task__action__dates__to">
+                            <div className="task__action__dates__to__name">Дата здачі</div>
+                            <div className="task__action__dates__to__separator"></div>
+                            <div className="task__action__dates__to__content">{ConvertDate(deadline)}</div>
+                        </div>
+                    </div>
+                    {testExisting ? <Link to={`/courses/task/test/${id}/${test.id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link> :
+                        <Link to={`/courses/task/${id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link>}
 
 
+                </div>
             </div>
-        </div>
+        </>
+
     )
 })
 

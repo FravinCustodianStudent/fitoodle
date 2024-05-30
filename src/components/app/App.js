@@ -13,6 +13,10 @@ import TestAssigment from "../tasks/testAssigment";
 import TestPage from "../tests/testPage";
 import ErrorBoundry from "../error/ErrorBoundry";
 import LoginTest from "../login/loginTest";
+import AdminPage from "../admin/adminPage";
+import AdminMain from "../admin/adminMain/adminMain";
+import AdminGroups from "../admin/groups/adminGroups";
+import CoursesMain from "../admin/courses/coursesMain";
 
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
@@ -61,7 +65,22 @@ const router = createBrowserRouter([
     ]},
     {path:"/login",Component:Login},
     {path:"/code",Component:Code},
-    {path:"/test",Component:LoginTest}
+    {path:"/test",Component:LoginTest},
+    {path:"/admin",Component:AdminPage,
+    children:[
+        {
+            path: '/admin',
+            element: <AdminMain/>
+        },
+        {
+            path: '/admin/groups',
+            element: <AdminGroups/>
+        },
+        {
+            path: '/admin/courses',
+            element: <CoursesMain/>
+        }
+    ]}
 ]);
 function App() {
   return (

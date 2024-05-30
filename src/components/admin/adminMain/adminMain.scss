@@ -1,0 +1,50 @@
+@import "../../shared/shared";
+.Admin{
+  display: flex;
+  &__main{
+    margin-top: 100px;
+    &__list{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      grid-column-gap: 44px;
+      grid-row-gap: 80px;
+      &__item{
+        background: $subColour;
+        box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+        border-radius: 21px;
+        position: relative;
+        //padding: 21px 17px;
+        display: flex;
+        &__name{
+          font-size: 24px;
+          font-weight: 700;
+          margin: 21px 17px;
+          color: $mainColour;
+        }
+        a{
+          background-color: $mainColour;
+          width: 84px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 0 21px 21px 0;
+          cursor: pointer;
+          transition: .5s all;
+          &:hover{
+            background-color: $contrastRed;
+          }
+        }
+        &__button{
+
+
+          svg{
+            fill: white;
+            width: 30px;
+            height: 30px;
+          }
+        }
+      }
+    }
+  }
+}

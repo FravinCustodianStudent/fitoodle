@@ -1,12 +1,12 @@
 import {buildStyles, CircularProgressbar} from "react-circular-progressbar";
 
 import "react-circular-progressbar/dist/styles.css";
-const CircularResult = () =>{
+const CircularResult = ({value}) =>{
     return(
         <div style={{width: 450}}>
             <CircularProgressbar
-                value={66}
-                text={`${66}%`}
+                value={value}
+                text={`${value}%`}
 
                 styles={{
                     path: {

@@ -29,6 +29,7 @@ const TestPage = () =>{
     const startTime = useSelector(state => state.tests.timer)
     const {GET,POST} = useHttp();
     const [eliminationTimer, setEliminationTimer] = useState("");
+    const [testResult, setTestResult] = useState()
     useEffect(() => {
         if (user!==null && Object.keys(user).length !==0){
             GET({taskId:taskId},"testingresource/testConfigs/by/task",{Authorization:localStorage.getItem("jwt")})
@@ -138,6 +139,9 @@ const TestPage = () =>{
         POST({},`testingresource/tests/${tests.id}/complete`,{Authorization:localStorage.getItem("jwt")},objectToCheck)
             .then((res)=>{
                 console.log(res)
+                setTestResult(res.data.testResult);
+                setLoading(false);
+
             })
             .catch((err)=>{
                 console.log(err)
@@ -179,6 +183,7 @@ const TestPage = () =>{
                                 </div>
                                 <div className="question__header__timer__name__content">
                                     Результат
+
                                 </div>
                             </div>
                             <div className="question__header__timer__content">
@@ -195,17 +200,17 @@ const TestPage = () =>{
                                         <HandySvg src={questionSrc}/>
                                     </div>
                                     <div className="question__main__info__header__content__name">
-                                        Результат
+                                        Результат {(testResult.testMarkValue).toString().substring(0,4) + " бала"}
                                     </div>
                                 </div>
                                 <div className="question__main__info__header__description">
-                                    Lorem ipsum dolor sit amet consectetur. Vel odio dui in pellentesque commodo urna. Urna tristique sit eu magna mi integer vitae dictum. Ultrices sodales amet pharetra lectus at urna. Enim ut semper ut rhoncus. In accumsan.
+                                    {testConfig.description}
                                 </div>
 
                             </div>
                         </div>
                         <div className="question__main__result">
-                            <CircularResult/>
+                            <CircularResult value={Math.round((testResult.testMarkValue/testConfig.maxTestMark)*100)}/>
                         </div>
                     </div>
                     </>;
