@@ -40,8 +40,6 @@ const AdminHeader = () =>{
             <div className="header__avatar"><img src={user.profileIconUrl} alt="user avatar"/> </div>
             <nav className="header__nav">
                 <NavLink to={"/admin"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={homeSrc} className="svg" /></a></NavLink>
-                <NavLink to={"/admin/tests"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={courseSrc} className="svg" /></a></NavLink>
-                <NavLink to={"/admin/schedule"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={scheduleSrc} className="svg" /></a></NavLink>
             </nav>
         </>
     }

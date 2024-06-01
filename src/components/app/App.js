@@ -17,6 +17,12 @@ import AdminPage from "../admin/adminPage";
 import AdminMain from "../admin/adminMain/adminMain";
 import AdminGroups from "../admin/groups/adminGroups";
 import CoursesMain from "../admin/courses/coursesMain";
+import TasksAdmin from "../admin/tasks/tasksAdmin";
+import QuestionGroupAdmin from "../admin/tests/questionGroupAdmin";
+import QuestionsAdmin from "../admin/tests/questionsAdmin";
+import TestConfig from "../admin/tests/testConfig";
+import ScheduleTask from "../schedule/scheduleTask/scheduleTask";
+import ScheduleAdmin from "../admin/schedule/scheduleAdmin";
 
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
@@ -79,6 +85,26 @@ const router = createBrowserRouter([
         {
             path: '/admin/courses',
             element: <CoursesMain/>
+        },
+        {
+            path: '/admin/tasks',
+            element: <TasksAdmin/>
+        },
+        {
+            path: '/admin/questiongroup',
+            element: <QuestionGroupAdmin/>
+        },
+        {
+            path: '/admin/questions',
+            element: <QuestionsAdmin/>
+        },
+        {
+            path: '/admin/testconfig',
+            element: <TestConfig/>
+        },
+        {
+            path: '/admin/schedule',
+                element: <ScheduleAdmin/>
         }
     ]}
 ]);

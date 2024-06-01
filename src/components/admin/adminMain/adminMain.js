@@ -29,9 +29,9 @@ const AdminMain = () =>{
             </div>
             <div className="Admin__main__list__item">
                 <div className="Admin__main__list__item__name">
-                    Групи
+                    Tasks
                 </div>
-                <Link to="groups">
+                <Link to="tasks">
                     <div className="Admin__main__list__item__button">
                         <HandySvg src={settingsSrc} className="svg" />
                     </div>
@@ -39,9 +39,9 @@ const AdminMain = () =>{
             </div>
             <div className="Admin__main__list__item">
                 <div className="Admin__main__list__item__name">
-                    Групи
+                    QuestionGroup
                 </div>
-                <Link to="groups">
+                <Link to="questiongroup">
                     <div className="Admin__main__list__item__button">
                         <HandySvg src={settingsSrc} className="svg" />
                     </div>
@@ -49,9 +49,9 @@ const AdminMain = () =>{
             </div>
             <div className="Admin__main__list__item">
                 <div className="Admin__main__list__item__name">
-                    Групи
+                    TestConfigs
                 </div>
-                <Link to="groups">
+                <Link to="testconfig">
                     <div className="Admin__main__list__item__button">
                         <HandySvg src={settingsSrc} className="svg" />
                     </div>
@@ -59,9 +59,19 @@ const AdminMain = () =>{
             </div>
             <div className="Admin__main__list__item">
                 <div className="Admin__main__list__item__name">
-                    Групи
+                    Питання
                 </div>
-                <Link to="groups">
+                <Link to="questions">
+                    <div className="Admin__main__list__item__button">
+                        <HandySvg src={settingsSrc} className="svg" />
+                    </div>
+                </Link>
+            </div>
+            <div className="Admin__main__list__item">
+                <div className="Admin__main__list__item__name">
+                    Розклад
+                </div>
+                <Link to="schedule">
                     <div className="Admin__main__list__item__button">
                         <HandySvg src={settingsSrc} className="svg" />
                     </div>

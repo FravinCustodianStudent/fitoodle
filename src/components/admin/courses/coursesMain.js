@@ -68,6 +68,9 @@ const CoursesMain = () =>{
                             })
                     })
             })
+            .catch((err)=>{
+                console.log(err)
+            })
 
     }, []);
     const onSubmit = date =>{
