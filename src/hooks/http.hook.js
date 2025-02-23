@@ -13,6 +13,7 @@ export const useHttp = () =>{
             // }
             // setProcess('loading');
             return customAxios.get(baseUrl+route,{
+                withCredentials: true,
                 params: {...params},
                 headers: {...headers}
             });
@@ -38,6 +39,7 @@ export const useHttp = () =>{
             // }
             // setProcess('loading');
             return customAxios.put(baseUrl+route,{
+                withCredentials: true,
                 params: {...params},
                 headers: {...headers},
                 data:{
@@ -47,13 +49,13 @@ export const useHttp = () =>{
         },
         []);
     const DELETE = useCallback(async (params,route,headers)=>{
-
             //TODO: Redirect if no token presented
             // if (localStorage.getItem('token') === null){
             //     navigate('/login');
             // }
             // setProcess('loading');
             return customAxios.delete(baseUrl+route,{
+                withCredentials: true,
                 params: {...params},
                 headers: {...headers}
             });
@@ -71,6 +73,7 @@ export const useHttp = () =>{
         console.log(params)
             return await customAxios.get(url,
                 {
+                    withCredentials: true,
                     params:{'code':params},
                     headers:{"Access-Control-Expose-Headers":"Access-Token, Uid"}
                 })

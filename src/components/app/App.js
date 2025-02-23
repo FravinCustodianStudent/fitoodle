@@ -23,7 +23,7 @@ import QuestionsAdmin from "../admin/tests/questionsAdmin";
 import TestConfig from "../admin/tests/testConfig";
 import ScheduleTask from "../schedule/scheduleTask/scheduleTask";
 import ScheduleAdmin from "../admin/schedule/scheduleAdmin";
-
+import TestResult from "../admin/testPanel/testResult/testResult";
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
     { path: "/", Component: Layout,
@@ -81,6 +81,10 @@ const router = createBrowserRouter([
         {
             path: '/admin/groups',
             element: <AdminGroups/>
+        },
+        {
+            path:'/admin/testResult',
+            element: <TestResult/>
         },
         {
             path: '/admin/courses',

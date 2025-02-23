@@ -19,8 +19,7 @@ const Schedule = () =>{
                 setLoading(false);
             })
         getWeeksDates();
-        setActiveTimer();
-        setInterval(setActiveTimer,100000);
+        setInterval(setActiveTimer,1000);
     }, []);
     const getCurrentMothDate = () =>{
         const date = new Date();
@@ -67,7 +66,6 @@ const Schedule = () =>{
     function setActiveTimer() {
         const currentTime = getCurrentTime();
         const timeElements = document.querySelectorAll('.schedule__content__timer__time');
-
         timeElements.forEach(element => {
             const timeRange = element.innerText.trim().split(' - ');
             const startTime = timeRange[0];
@@ -114,7 +112,7 @@ const Schedule = () =>{
                         <div className="schedule__content__timer__time">
                             10.30 - 11.50
                         </div>
-                        <div className="schedule__content__timer__time active-timer">
+                        <div className="schedule__content__timer__time">
                             12.10 - 13.30
                         </div>
                         <div className="schedule__content__timer__time">

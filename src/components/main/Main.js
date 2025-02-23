@@ -21,10 +21,9 @@ const Main = withErrorBoundary(() => {
     const {GET} = useHttp();
     const [Tasks, setTasks] = useState({});
     useEffect(()=>{
-
-            if (Object.keys(user).length!==0 && !error ){
-                getTasks()
-            }
+            // if (Object.keys(user).length!==0 && !error ){
+            //     getTasks()
+            // }
     },[user,error]);
 
     const getTasks = () =>{

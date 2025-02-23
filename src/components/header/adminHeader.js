@@ -25,11 +25,15 @@ const AdminHeader = () =>{
             if (jwt == null){
                 navigate("/login");
             }else{
-                GET(null,"authresource/auth/login",{"Authorization":jwt})
+                GET(null,"authresource/auth/login")
                     .then((res)=>{
+                        console.log(res)
                         localStorage.setItem("jwt",res.headers.authorization);
                         dispatch(setUser(res.data))
                         setLoading(false);
+                    })
+                    .catch((err)=>{
+                        navigate("/test");
                     })
             }
 

@@ -11,7 +11,7 @@ const AdminMain = () =>{
                 <div className="Admin__main__list__item__name">
                     Групи
                 </div>
-               <Link to="groups">
+               <Link to="testResult">
                    <div className="Admin__main__list__item__button">
                        <HandySvg src={settingsSrc} className="svg" />
                    </div>
