@@ -9,6 +9,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.6.7",
+    "date-fns": "^4.1.0",
     "framer-motion": "^11.2.6",
     "handy-svg": "^1.0.8",
     "lucide": "^0.475.0",

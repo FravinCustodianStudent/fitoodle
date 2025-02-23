@@ -1,0 +1,321 @@
+/****************************
+ * LessonSchedule.scss
+ ****************************/
+
+/* Переменные */
+:root {
+  --color-bg: #f5f5f5;
+  --color-card-bg: #ffffff;
+  --color-text: #1c1c1c;
+  --color-red: #b71c1c;         /* темно-красный */
+  --color-red-hover: #9f1a1a;   /* красный при hover */
+  --color-border: #e5e7eb;
+  --color-gray: #6b7280;
+
+  --color-blue-light: #dbeafe;  /* для lecture */
+  --color-green-light: #d1fae5; /* для practice */
+  --color-purple-light: #ede9fe;/* для consultation */
+
+  --color-shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* Блок: .lesson-schedule */
+.lesson-schedule {
+  margin-top: 2rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 100vh;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text);
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  &__nav-button {
+    display: inline-flex;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+    &:hover {
+      background-color: #f3f3f3;
+    }
+  }
+
+  &__week-range {
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  &__icon {
+    width: 1rem;
+    height: 1rem;
+    color: var(--color-text);
+  }
+
+  /* Таблица расписания */
+  &__table {
+    background-color: var(--color-card-bg);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    &-header {
+      display: grid;
+      grid-template-columns: 80px repeat(7, 1fr); /* первая колонка для времени */
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    &-body {
+      display: flex;
+      flex-direction: column;
+      /* Каждая строка -> .lesson-schedule__row */
+    }
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: 80px repeat(7, 1fr);
+    border-bottom: 1px solid var(--color-border);
+    position: relative;
+  }
+
+  &__cell--header {
+    background-color: #fafafa;
+    text-align: center;
+    padding: 1rem;
+    border-right: 1px solid var(--color-border);
+  }
+
+  &__day-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: center;
+  }
+
+  &__day-name {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  &__day-date {
+    font-size: 0.875rem;
+    color: var(--color-gray);
+  }
+
+  &__cell--time {
+    background-color: #fafafa;
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.875rem;
+    color: var(--color-gray);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__cell--day {
+    border-right: 1px solid var(--color-border);
+    min-height: 80px;
+    position: relative;
+    cursor: pointer;
+    padding: 0.5rem;
+    &:hover {
+      background-color: #f9fafb;
+    }
+  }
+
+  /* Слот */
+  &__slot {
+    inset: 0.25rem 0.25rem auto 0.25rem;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-text);
+
+    &--lecture {
+      background-color: var(--color-blue-light);
+    }
+    &--practice {
+      background-color: var(--color-green-light);
+    }
+    &--consultation {
+      background-color: var(--color-purple-light);
+    }
+  }
+
+  &__slot-title {
+    font-weight: 600;
+  }
+  &__slot-group {
+    font-size: 0.75rem;
+    color: #555;
+  }
+  &__slot-instructor {
+    font-size: 0.75rem;
+    color: #555;
+  }
+  &__slot-time {
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: #666;
+  }
+
+  &__icon--small {
+    width: 0.75rem;
+    height: 0.75rem;
+    color: #666;
+  }
+
+  &__empty-slot {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.1;
+    transition: opacity 0.2s;
+    .lesson-schedule__icon--faded {
+      width: 1.5rem;
+      height: 1.5rem;
+      color: #9ca3af;
+    }
+    &:hover {
+      opacity: 0.4;
+    }
+  }
+
+  /*****************************
+   * Модальное окно
+   *****************************/
+  &__modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(107, 114, 128, 0.75); /* gray with opacity */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+
+  &__modal {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  &__modal-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  &__modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text);
+  }
+  &__modal-close {
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  &__modal-body {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  &__input {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.3);
+      border-color: var(--color-red);
+    }
+  }
+
+  &__time-row {
+    display: flex;
+    gap: 1rem;
+  }
+
+  &__checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__checkbox {
+    width: 1rem;
+    height: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    cursor: pointer;
+  }
+
+  &__checkbox-label {
+    font-size: 0.875rem;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
+  &__modal-footer {
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+}

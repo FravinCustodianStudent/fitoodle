@@ -21,9 +21,9 @@ import TasksAdmin from "../admin/tasks/tasksAdmin";
 import QuestionGroupAdmin from "../admin/tests/questionGroupAdmin";
 import QuestionsAdmin from "../admin/tests/questionsAdmin";
 import TestConfig from "../admin/tests/testConfig";
-import ScheduleTask from "../schedule/scheduleTask/scheduleTask";
-import ScheduleAdmin from "../admin/schedule/scheduleAdmin";
 import TestResult from "../admin/testPanel/testResult/testResult";
+import LearningGroups from "../admin/learningGroups/LearningGroups";
+import LessonSchedule from "../admin/schedule/LessonSchedule";
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
     { path: "/", Component: Layout,
@@ -79,6 +79,10 @@ const router = createBrowserRouter([
             element: <AdminMain/>
         },
         {
+            path: '/admin/lergroups',
+            element: <LearningGroups/>
+        },
+        {
             path: '/admin/groups',
             element: <AdminGroups/>
         },
@@ -108,7 +112,7 @@ const router = createBrowserRouter([
         },
         {
             path: '/admin/schedule',
-                element: <ScheduleAdmin/>
+                element: <LessonSchedule/>
         }
     ]}
 ]);

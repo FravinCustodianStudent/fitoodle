@@ -1,0 +1,632 @@
+/****************************
+ * LearningGroups.scss
+ ****************************/
+
+/* Переменные */
+:root {
+  --color-bg: #f5f5f5;
+  --color-panel-bg: #ffffff;
+  --color-text: #1c1c1c;
+  --color-card-bg: #ffffff;
+  --color-red: #D90429;         /* Основной темно-красный */
+  --color-red-hover: #9f1a1a;   /* Красный при hover */
+  --color-red-light: #f8dada;   /* Светлый оттенок красного (если нужно) */
+  --color-gray: #6b7280;        /* Вторичный текст */
+  --color-border: #e5e7eb;
+  --color-indigo-bg: #e0e7ff;
+  --color-indigo-text: #3730a3;
+  --color-green-bg: #d1fae5;
+  --color-green-text: #065f46;
+  --color-error-bg: #fee2e2;
+  --color-error-text: #991b1b;
+  --color-yellow-bg: #fef9c3;
+  --color-yellow-text: #92400e;
+  --color-purple-bg: #f3e8ff;
+  --color-purple-text: #6b21a8;
+  --color-blue-bg: #dbeafe;
+  --color-blue-text: #1e40af;
+
+  --color-shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* Главный блок */
+.learning-groups {
+  width: 100%;
+  color: var(--color-text);
+  font-family: sans-serif;
+  min-height: 100vh;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  /* Шапка (Header) */
+  &__header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  &__title {
+    font-size: 1.875rem; /* ~ text-3xl */
+    font-weight: 700;
+    margin: 0;
+  }
+
+  /* Кнопки-ссылки (Create Group, Create Task) */
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+    color: #251D1D; /* Текст на кнопке */
+    border: none;
+    outline: none;
+
+    &--primary {
+      box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+      position: relative;
+      svg{
+        z-index: 3;
+        color: white;
+        transform: translateX(-40%);
+        transition: transform 0.2s;
+      }
+      &::before{
+        position: absolute;
+        background-color: #2B2D42;
+        width: 2rem;
+        height: 100%;
+        left: 0;
+        content: '';
+        border-radius: 0.5rem  0  0 0.5rem;
+      }
+      &:hover {
+        color: inherit;
+        svg{
+          transform: translateX(-40%) scale(1.2);
+        }
+        &::before{
+          background-color: var(--color-red-hover);
+        }
+      }
+    }
+
+    &--outline {
+      background-color: transparent;
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+      &:hover {
+        background-color: #f3f3f3;
+      }
+    }
+  }
+
+  /* Основная сетка (левая панель + правая часть) */
+  &__main-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    @media (min-width: 1024px) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* Левая панель (список групп) */
+  &__list-panel {
+    background-color: var(--color-panel-bg);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+    display: flex;
+    flex-direction: column;
+
+    &-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--color-border);
+      border-radius: 0.5rem 0.5rem 0 0;
+      box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+    }
+
+    &-search {
+      position: relative;
+      &-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+      &-input {
+        width: 100%;
+        padding: 0.5rem 1rem 0.5rem 2.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        outline: none;
+        font-size: 0.875rem;
+        &:focus {
+          box-shadow: 0 0 0 2px rgba(183, 28, 28, 0.3);
+          border-color: var(--color-red);
+        }
+      }
+    }
+  }
+
+  &__groups-list {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+
+    /* Ссылка на группу */
+    .learning-groups__group-link {
+      display: block;
+      text-decoration: none;
+      color: var(--color-text);
+      width: 100%;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #f3f3f3;
+        .learning-groups__group-link-content {
+          .learning-groups__group-name,
+          .learning-groups__group-sub {
+            color: #251d1d;
+          }
+        }
+      }
+
+      &--active {
+        background-color: #2b2d42;
+        .learning-groups__group-link-content {
+          .learning-groups__group-name,
+          .learning-groups__group-sub {
+            color: #ffffff;
+          }
+        }
+      }
+    }
+  }
+
+  &__group-link-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  &__group-name {
+    margin: 0;
+    font-weight: 600;
+  }
+  &__group-sub {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+    color: var(--color-gray);
+  }
+  &__group-info-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-end;
+  }
+  &__group-info-students {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  &__group-student-count {
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+
+  /****************************
+   * Бейджи (для % и статусов)
+   ****************************/
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: none;
+
+    &--indigo {
+      background-color: var(--color-indigo-bg);
+      color: var(--color-indigo-text);
+    }
+    &--green {
+      background-color: var(--color-green-bg);
+      color: var(--color-green-text);
+    }
+    &--red {
+      background-color: var(--color-error-bg);
+      color: var(--color-error-text);
+    }
+    &--yellow {
+      background-color: var(--color-yellow-bg);
+      color: var(--color-yellow-text);
+    }
+    &--purple {
+      background-color: var(--color-purple-bg);
+      color: var(--color-purple-text);
+    }
+    &--blue {
+      background-color: var(--color-blue-bg);
+      color: var(--color-blue-text);
+    }
+  }
+
+  /****************************
+   * Правая панель (детали группы)
+   ****************************/
+  &__details-panel {
+    grid-column: span 2 / span 2;
+  }
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  &__empty-state {
+    background-color: var(--color-card-bg);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+    padding: 1.5rem;
+    text-align: center;
+  }
+  &__empty-text {
+    font-size: 0.875rem;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  /* Вкладки (Overview, Students, Tasks) */
+  &__tabs-card {
+    background-color: var(--color-white, #fff);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+  }
+  &__tabs-nav {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .learning-groups__tab-link {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--color-gray);
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s;
+    &:hover {
+      color: #333;
+    }
+    &--active {
+      border-bottom: 2px solid var(--color-red);
+      color: var(--color-red);
+    }
+  }
+
+  /* Карточки */
+  &__card {
+    background-color: var(--color-card-bg);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+    display: flex;
+    flex-direction: column;
+
+    &--info {
+      padding: 1.5rem;
+    }
+  }
+  &__card-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  &__card-title {
+    margin: 0;
+    font-weight: 500;
+  }
+  &__card-list {
+    display: flex;
+    flex-direction: column;
+    > * + * {
+      border-top: 1px solid var(--color-border);
+    }
+  }
+  &__card-item {
+    padding: 1rem;
+  }
+  &__card-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  &__card-item-row--space {
+    align-items: flex-start;
+  }
+  &__card-item-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  &__card-item-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  &__card-item-title {
+    margin: 0;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+  &__card-item-sub {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+    color: var(--color-gray);
+  }
+  &__card-item-date {
+    font-size: 0.875rem;
+    color: var(--color-gray);
+  }
+
+  /***********************
+   * Иконки
+   ***********************/
+  &__icon {
+    width: 1rem;
+    height: 1rem;
+    color: var(--color-text);
+  }
+  &__icon--gray-small {
+    width: 0.875rem;
+    height: 0.875rem;
+    color: #9ca3af;
+  }
+
+  /***********************
+   * Overview tab
+   ***********************/
+  &__overview-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  &__info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+  &__info-name {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  &__info-email {
+    margin: 0.25rem 0 0 0;
+    color: var(--color-gray);
+  }
+  &__info-header-right {
+    text-align: right;
+  }
+  &__info-score {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+  &__info-score-label {
+    font-size: 0.875rem;
+    color: var(--color-gray);
+    margin: 0;
+  }
+  &__info-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  &__info-stat {
+    background-color: #fafafa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+  }
+  &__info-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+  &__info-stat-label {
+    font-size: 0.875rem;
+    color: var(--color-gray);
+    margin: 0;
+  }
+
+  /***********************
+   * Students tab
+   ***********************/
+  &__student-name {
+    margin: 0;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+  &__student-email {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+    color: var(--color-gray);
+  }
+  &__student-score {
+    text-align: right;
+  }
+  &__student-score-top {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  &__student-score-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  &__student-score-label {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--color-gray);
+  }
+  &__student-activity {
+    margin-top: 1rem;
+  }
+  &__student-activity-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+  &__student-activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  &__activity-item {
+    background-color: #fafafa;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  &__activity-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  &__activity-title {
+    font-size: 0.875rem;
+    color: var(--color-text);
+  }
+  &__activity-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  &__activity-date {
+    font-size: 0.75rem;
+    color: var(--color-gray);
+  }
+
+  /***********************
+   * Tasks tab
+   ***********************/
+  &__tasks-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  &__tasks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  &__tasks-title {
+    margin: 0;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+  &__tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  &__label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    color: var(--color-text);
+  }
+  &__input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    outline: none;
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(183,28,28,0.3);
+      border-color: var(--color-red);
+    }
+  }
+  &__form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  /* Статистика по задачам */
+  &__task-top {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  &__task-title {
+    margin: 0;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+  &__task-desc {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.875rem;
+    color: var(--color-gray);
+  }
+  &__task-deadline {
+    text-align: right;
+  }
+  &__task-deadline-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  &__task-deadline-date {
+    font-size: 0.875rem;
+    color: var(--color-gray);
+  }
+  &__task-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  &__task-stat {
+    background-color: #fafafa;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    text-align: center;
+  }
+  &__task-stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+  &__task-stat-label {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.75rem;
+    color: var(--color-gray);
+  }
+}

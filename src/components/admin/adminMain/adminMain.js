@@ -9,7 +9,7 @@ const AdminMain = () =>{
         <div className="Admin__main__list">
             <div className="Admin__main__list__item">
                 <div className="Admin__main__list__item__name">
-                    Групи
+                    тести
                 </div>
                <Link to="testResult">
                    <div className="Admin__main__list__item__button">
@@ -19,9 +19,9 @@ const AdminMain = () =>{
             </div>
             <div className="Admin__main__list__item">
                 <div className="Admin__main__list__item__name">
-                    Курси
+                    групи
                 </div>
-                <Link to="courses">
+                <Link to="lergroups">
                     <div className="Admin__main__list__item__button">
                         <HandySvg src={settingsSrc} className="svg" />
                     </div>
