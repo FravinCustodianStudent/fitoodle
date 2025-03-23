@@ -1,0 +1,306 @@
+/****************************
+ * Dashboard.scss
+ ****************************/
+
+/* Обновлённые переменные по вашей палитре */
+:root {
+  /* Основная фоновая заливка */
+  --color-bg: #FAFAFB; /* $subColour */
+  /* Базовый белый (для карточек, контейнеров и т.п.) */
+  --color-white: #FFFFFF;
+  /* Основной цвет текста */
+  --color-text: #2B2D42; /* $mainColour */
+  /* Дополнительный (тёмно-серый) цвет для текста */
+  --color-dark-text: #535566; /* $darkGray */
+  /* Серый (для границ, вторичного текста, иконок и т.п.) */
+  --color-gray: #C2C2C7; /* $gray */
+  /* Контрастный красный (для выделения ошибок, предупреждений) */
+  --color-contrast-red: #D90429; /* $contrastRed */
+  /* Тень */
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  /* Граница (можно оставить серой) */
+  --color-border: #C2C2C7;
+}
+
+/* Основной контейнер дашборда */
+.dashboard {
+  padding: 1.5rem;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  &__date {
+    font-size: 0.875rem;
+    color: var(--color-dark-text);
+  }
+
+  /* Блок быстрой навигации */
+  &__quicknav {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  &__quicknav-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: var(--color-white);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+    text-decoration: none;
+    transition: background-color 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      background-color: #f0f0f3;
+      box-shadow: 0 2px 5px var(--color-shadow);
+    }
+  }
+
+  &__quicknav-button__left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__quicknav-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-text);
+  }
+
+  &__quicknav-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  &__quicknav-arrow {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-gray);
+  }
+
+  /* Статистика (карточки) */
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  &__stat-card {
+    background-color: var(--color-white);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+    display: flex;
+    align-items: center;
+  }
+
+  /* Вместо "--blue", "--green", "--purple" используем более семантические */
+  &__stat-icon-wrapper {
+    border-radius: 50%;
+    background-color: #2B2D42;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem;
+  }
+
+  &__stat-icon-wrapper--main {
+    background-color: var(--color-text); /* Можно использовать основной цвет */
+  }
+
+  &__stat-icon-wrapper--contrast {
+    background-color: var(--color-contrast-red);
+  }
+
+  &__stat-icon-wrapper--gray {
+    background-color: var(--color-gray);
+  }
+
+  &__stat-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--color-white);
+  }
+
+  &__stat-info {
+    margin-left: 1rem;
+  }
+
+  &__stat-label {
+    font-size: 0.875rem;
+    margin: 0;
+    color: var(--color-dark-text);
+  }
+
+  &__stat-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  /* Модули справа/слева (Active Groups, Upcoming Events и т.п.) */
+  &__modules {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    &__modules {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  &__module {
+    position: relative;
+    background-color: var(--color-white);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px var(--color-shadow), 0 1px 2px var(--color-shadow);
+    overflow: hidden; /* Чтобы «обрезать» нижние границы, если что-то выступает */
+  }
+
+  &__module-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-sub);
+  }
+
+  &__module-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  &__module-link {
+    font-size: 0.875rem;
+    color: var(--color-text);
+    text-decoration: underline;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--color-dark-text);
+    }
+  }
+
+  &__module-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 1.5rem; /* Немного «воздуха» слева и справа */
+  }
+
+  &__module-item {
+    padding: 1rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--color-border);
+
+    &:last-child {
+      border-bottom: none; /* Чтобы последний элемент не имел нижней границы */
+    }
+  }
+
+  /* Информация о группе (Active Groups) */
+  &__group-info {
+    flex: 1;
+  }
+
+  &__group-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text);
+  }
+
+  &__group-activity {
+    font-size: 0.875rem;
+    color: var(--color-dark-text);
+    margin-top: 0.25rem;
+  }
+
+  &__group-stats {
+    display: flex;
+    gap: 1rem;
+  }
+
+  &__group-stat {
+    text-align: right;
+  }
+
+  &__group-stat-label {
+    margin-right: 5px;
+    font-size: 0.75rem;
+    color: var(--color-gray);
+  }
+
+  &__group-stat-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  /* События (Upcoming Events) */
+  &__event-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__event-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  &__icon {
+    color: var(--color-text);
+  }
+
+  &__event-details {
+    flex: 1;
+  }
+
+  &__event-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text);
+  }
+
+  &__event-group {
+    font-size: 0.875rem;
+    color: var(--color-dark-text);
+    margin-top: 0.25rem;
+  }
+
+  &__event-date {
+    font-size: 0.875rem;
+    color: var(--color-gray);
+  }
+}

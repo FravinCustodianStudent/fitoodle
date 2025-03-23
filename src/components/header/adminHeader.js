@@ -5,10 +5,10 @@ import {useEffect, useState} from "react";
 import {setUser} from "../../slices/userSlice";
 import {HandySvg} from "handy-svg";
 import homeSrc from "../../assets/home.svg";
+import {Oval} from "react-loader-spinner";
 import courseSrc from "../../assets/courses.svg";
 import scheduleSrc from "../../assets/schedule.svg";
 import settingsSrc from "../../assets/settings.svg";
-import {Oval} from "react-loader-spinner";
 
 
 const AdminHeader = () =>{
@@ -21,29 +21,28 @@ const AdminHeader = () =>{
 
     useEffect(()=>{
         if (user==null || Object.keys(user).length == 0){
-            const jwt = localStorage.getItem("jwt");
-            if (jwt == null){
-                navigate("/login");
-            }else{
-                GET(null,"authresource/auth/login")
-                    .then((res)=>{
-                        console.log(res)
-                        localStorage.setItem("jwt",res.headers.authorization);
-                        dispatch(setUser(res.data))
-                        setLoading(false);
-                    })
-                    .catch((err)=>{
-                        navigate("/test");
-                    })
-            }
+            GET(null,"authresource/auth/login")
+                .then((res)=>{
+                    console.log(res)
+                    localStorage.setItem("jwt",res.headers.authorization);
+                    dispatch(setUser(res.data))
+                })
+                .catch((err)=>{
+                    navigate("/test");
+                })
 
         }
+        setLoading(false);
+
     },[user]);
     const renderElement = () =>{
         return <>
             <div className="header__avatar"><img src={user.profileIconUrl} alt="user avatar"/> </div>
             <nav className="header__nav">
                 <NavLink to={"/admin"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={homeSrc} className="svg" /></a></NavLink>
+                <NavLink to={"/courses"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={courseSrc} className="svg" /></a></NavLink>
+                <NavLink to={"/schedule"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={scheduleSrc} className="svg" /></a></NavLink>
+                <NavLink to={"/settings"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={settingsSrc} className="svg" /></a></NavLink>
             </nav>
         </>
     }

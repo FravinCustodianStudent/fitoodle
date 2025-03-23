@@ -1,9 +1,9 @@
 import {useNavigate, useSearchParams} from "react-router-dom";
-import {useEffect, useState} from "react";
+import {useEffect} from "react";
 import {useHttp} from "../../hooks/http.hook";
 import "./login.scss";
 import {setUser} from "../../slices/userSlice";
-import {useDispatch, useSelector} from "react-redux";
+import {useDispatch} from "react-redux";
 import "./code.scss"
 const Code = () => {
 
@@ -18,9 +18,6 @@ const Code = () => {
                 GET(null,"authresource/auth/login",{"Authorization":res.headers.authorization})
                     .then((res)=>{
                         dispatch(setUser(res.data))
-                        console.log(res.data)
-                        localStorage.setItem("jwt",res.headers.authorization);
-                        console.log(localStorage.getItem("jwt"))
                         navigate("/")
                     })
             })

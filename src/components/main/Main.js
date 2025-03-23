@@ -21,18 +21,18 @@ const Main = withErrorBoundary(() => {
     const {GET} = useHttp();
     const [Tasks, setTasks] = useState({});
     useEffect(()=>{
-            // if (Object.keys(user).length!==0 && !error ){
-            //     getTasks()
-            // }
+            if (Object.keys(user).length!==0 && !error ){
+                getTasks()
+            }
     },[user,error]);
 
     const getTasks = () =>{
-            GET({studentId:user.id},"groupresource/groups/student",{Authorization:localStorage.getItem("jwt")})
+            GET({studentId:user.id},"userdataresource/groups/by-student",{})
                 .then((res)=>{
-                    console.log(res.data)
-                    GET({groupId:res.data.id},"courseresource/courses/by/group",{Authorization:localStorage.getItem("jwt")})
+                    console.log(user.data)
+                    GET({groupId:res.data.id},"courseresource/courses/by/group",{})
                         .then((result)=>{
-                                GET({eduCourseId:result.data[0].id},"taskresource/tasks/by/course",{Authorization:localStorage.getItem("jwt")})
+                                GET({eduCourseId:result.data[0].id},"taskresource/tasks/by/course",{})
                                     .then((spacite)=>{
                                         console.log(spacite)
                                         console.log(spacite.data.length)

@@ -1,9 +1,11 @@
 @import "../../shared/shared";
-.Admin__groups{
+
+.Admin__groups {
   margin-top: 40px;
-  &__table{
-    .table-wrapper{
-      box-shadow: 0px 35px 50px rgba( 0, 0, 0, 0.2 );
+
+  &__table {
+    .table-wrapper {
+      box-shadow: 0px 35px 50px rgba(0, 0, 0, 0.2);
     }
 
     .fl-table {
@@ -18,7 +20,8 @@
       background-color: white;
     }
 
-    .fl-table td, .fl-table th {
+    .fl-table td,
+    .fl-table th {
       text-align: center;
       padding: 8px;
     }
@@ -33,7 +36,6 @@
       background: $contrastRed;
     }
 
-
     .fl-table thead th:nth-child(odd) {
       color: #ffffff;
       background: $mainColour;
@@ -44,7 +46,7 @@
     }
 
     /* Responsive */
-    td{
+    td {
       button {
         width: 150px;
         height: 50px;
@@ -53,44 +55,42 @@
         align-items: center;
         border: none;
         border-radius: 5px;
-        box-shadow: 1px 1px 3px rgba(0,0,0,0.15);
+        box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.15);
         background: $mainColour;
       }
-      button:disabled{
+      button:disabled {
         background: white;
         border: 1px solid $gray;
-        .text{
+        .text {
           color: gray;
         }
-        &:hover{
+        &:hover {
           background: white;
-          .text{
+          .text {
             color: $gray;
           }
-          .icon{
+          .icon {
             width: 40px;
             border-left: 1px solid $gray;
             transform: translateX(110px);
           }
         }
-        .icon{
+        .icon {
           border-left: 1px solid $gray;
-          svg{
+          svg {
             fill: $gray;
           }
         }
-
       }
-      button, button span {
+      button,
+      button span {
         transition: 200ms;
       }
-
       button .text {
         transform: translateX(35px);
         color: white;
         font-weight: bold;
       }
-
       button .icon {
         position: absolute;
         border-left: 1px solid white;
@@ -101,40 +101,35 @@
         align-items: center;
         justify-content: center;
       }
-
       button svg {
         width: 15px;
         fill: #eee;
       }
-
       button:hover {
         background: $contrastRed;
       }
-
       button:hover .text {
         color: transparent;
       }
-
       button:hover .icon {
         width: 150px;
         border-left: none;
         transform: translateX(0);
       }
-
       button:focus {
         outline: none;
       }
-
       button:active .icon svg {
         transform: scale(0.8);
       }
     }
+
     @media (max-width: 767px) {
       .fl-table {
         display: block;
         width: 100%;
       }
-      .table-wrapper:before{
+      .table-wrapper:before {
         content: "Scroll horizontally >";
         display: block;
         text-align: right;
@@ -142,10 +137,12 @@
         color: white;
         padding: 0 0 10px;
       }
-      .fl-table thead, .fl-table tbody, .fl-table thead th {
+      .fl-table thead,
+      .fl-table tbody,
+      .fl-table thead th {
         display: block;
       }
-      .fl-table thead th:last-child{
+      .fl-table thead th:last-child {
         border-bottom: none;
       }
       .fl-table thead {
@@ -156,8 +153,9 @@
         position: relative;
         overflow-x: auto;
       }
-      .fl-table td, .fl-table th {
-        padding: 20px .625em .625em .625em;
+      .fl-table td,
+      .fl-table th {
+        padding: 20px 0.625em 0.625em 0.625em;
         height: 60px;
         vertical-align: middle;
         box-sizing: border-box;
@@ -193,15 +191,18 @@
       }
     }
   }
-  &__form{
+
+  &__form {
     background: $subColour;
     padding: 20px;
     margin-top: 20px;
     border-radius: 20px;
-    box-shadow: 0px 35px 50px rgba( 0, 0, 0, 0.2 );
-    .css-t31psp-control:hover{
+    box-shadow: 0px 35px 50px rgba(0, 0, 0, 0.2);
+
+    .css-t31psp-control:hover {
       background: $contrastRed;
     }
+
     button {
       margin-top: 20px;
       font-family: inherit;
@@ -233,7 +234,6 @@
 
     button:hover .svg-wrapper {
       animation: fly-1 0.6s ease-in-out infinite alternate;
-
     }
 
     button:hover svg {
@@ -247,7 +247,8 @@
     button:active {
       transform: scale(0.95);
     }
-    button:hover{
+
+    button:hover {
       background: $contrastRed;
     }
 
@@ -255,14 +256,94 @@
       from {
         transform: translateY(0.1em);
       }
-
       to {
         transform: translateY(-0.1em);
       }
     }
 
-    .groupSelect{
+    .groupSelect {
+      // additional styles if needed
+    }
+  }
+}
+
+/* -----------------------------
+   New Styles for CreateGroupModal
+------------------------------ */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-window {
+  background: white;
+  border-radius: 10px;
+  padding: 30px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0px 35px 50px rgba(0, 0, 0, 0.2);
+  position: relative;
+
+  h2 {
+    margin-top: 0;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+
+    label {
+      display: block;
+      margin-bottom: 5px;
     }
 
+    input,
+    .css-t31psp-control,
+    select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid $gray;
+      border-radius: 5px;
+    }
   }
+
+  .error {
+    color: $contrastRed;
+    font-size: 12px;
+    margin-top: 5px;
+  }
+
+  button {
+    margin-top: 20px;
+    font-family: inherit;
+    font-size: 18px;
+    background: $mainColour;
+    color: white;
+    padding: 0.7em 1em;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  button:hover {
+    background: $contrastRed;
+  }
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
 }

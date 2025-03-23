@@ -12,14 +12,15 @@ const Schedule = () =>{
     const  {GET} = useHttp();
     const [Loading, setLoading] = useState(true);
     useEffect(() => {
-        GET({},"scheduleresource/schedules/by/authenticated",{Authorization:localStorage.getItem("jwt")})
+        GET({},"scheduleresource/schedules/personal",{})
             .then((res)=>{
+                //#Update schedule
                 console.log(res.data);
-                setSchedule(res.data);
-                setLoading(false);
+                // setSchedule(res.data);
+                // setLoading(false);
             })
-        getWeeksDates();
-        setInterval(setActiveTimer,1000);
+        // getWeeksDates();
+        // setInterval(setActiveTimer,1000);
     }, []);
     const getCurrentMothDate = () =>{
         const date = new Date();

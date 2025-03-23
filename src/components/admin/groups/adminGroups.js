@@ -1,169 +1,265 @@
 import "./adminGroups.scss";
-import {useEffect, useState} from "react";
-import {useHttp} from "../../../hooks/http.hook";
-import {Oval} from "react-loader-spinner";
+import { useEffect, useState } from "react";
+import { useHttp } from "../../../hooks/http.hook";
+import { Oval } from "react-loader-spinner";
 import * as yup from "yup";
-import {yupResolver} from "@hookform/resolvers/yup";
-import {Controller, useForm} from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Controller, useForm } from "react-hook-form";
 import Select from "react-select";
 import AdminGroupItem from "./adminGroupItem";
 
-const schema = yup.object().shape({
-    enterYear: yup.number().required().positive().integer().min(2000),
-    endYear: yup.number().required().positive().integer().min(2004),
-    name: yup.string().required(),
-    students: yup.array().of(yup.object().required()).min(1, 'Select at least one student')
+/* ======================================================
+   CreateGroupModal Component (Modal for Creating Groups)
+   ====================================================== */
+
+// New schema for modal group creation. Note that we now use fields
+// that match your JSON sample: enterYear, specNameShort, groupNumber, students.
+const modalSchema = yup.object().shape({
+    enterYear: yup
+        .number()
+        .required("Enter Year is required")
+        .positive("Must be positive")
+        .integer("Must be an integer")
+        .min(2000, "Year must be at least 2000"),
+    specNameShort: yup.string().required("Specialization Short Name is required"),
+    groupNumber: yup
+        .number()
+        .required("Group Number is required")
+        .positive("Must be positive")
+        .integer("Must be an integer"),
+    students: yup
+        .array()
+        .of(yup.object().required())
+        .min(1, "Select at least one student")
 });
-const AdminGroups = () =>{
-    const {GET,POST} = useHttp();
-    const { register, handleSubmit, control, formState: { errors } } = useForm({
-        resolver: yupResolver(schema)
+
+const CreateGroupModal = ({ isOpen, onClose, onSubmit, users }) => {
+    const {
+        register,
+        handleSubmit,
+        control,
+        formState: { errors }
+    } = useForm({
+        resolver: yupResolver(modalSchema)
     });
-    const [users, setUsers] = useState([
-        { id: '3b6df8d7-7add-4eae-9e18-4a2803c4fc13', name: 'User 1' },
-        // Добавьте здесь больше пользователей
-    ]);
+
+    // Build searchable options from users.
     const userOptions = users.map(user => ({
-        value: user.userId,
-        label: (user.firstName+" "+user.lastName)
+        value: user.id, // adjust if your user object uses a different identifier
+        label: `${user.firstName} ${user.lastName}`
     }));
-    const onSubmit = data => {
-        const dateToUpload = {
-            endYear: data.endYear,
-            enterYear:data.enterYear,
-            name:data.name,
-            students:(data.students.map(user=> user.value)),
-        }
-        console.log(dateToUpload)
-        POST({},"groupresource/groups",{"Authorization": localStorage.getItem("jwt")},dateToUpload)
-            .then((res)=>{
-                setGroups([...Groups,res.data])
-            })
-        console.log(data);
-        // Здесь можно сделать что-то с данными, например отправить их на сервер
+
+    const submitHandler = data => {
+        // Transform the form data into the desired payload.
+        const payload = {
+            enterYear: data.enterYear,
+            specNameShort: data.specNameShort,
+            groupNumber: data.groupNumber,
+            students: data.students.map(student => student.value),
+            subGroups: [],
+            active: true
+        };
+        onSubmit(payload);
     };
-    const [Groups, setGroups] = useState();
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="modal-overlay">
+            <div className="modal-window">
+                <button className="close-button" onClick={onClose}>
+                    ×
+                </button>
+                <h2>Create Group</h2>
+                <form onSubmit={handleSubmit(submitHandler)}>
+                    <div className="form-group">
+                        <label>Enter Year</label>
+                        <input type="number" placeholder="2025" {...register("enterYear")} />
+                        {errors.enterYear && (
+                            <span className="error">{errors.enterYear.message}</span>
+                        )}
+                    </div>
+
+                    <div className="form-group">
+                        <label>Specialization Short Name</label>
+                        <input type="text" placeholder="ІПЗ" {...register("specNameShort")} />
+                        {errors.specNameShort && (
+                            <span className="error">{errors.specNameShort.message}</span>
+                        )}
+                    </div>
+
+                    <div className="form-group">
+                        <label>Group Number</label>
+                        <input type="number" placeholder="10" {...register("groupNumber")} />
+                        {errors.groupNumber && (
+                            <span className="error">{errors.groupNumber.message}</span>
+                        )}
+                    </div>
+
+                    <div className="form-group">
+                        <label>Students</label>
+                        <Controller
+                            name="students"
+                            control={control}
+                            render={({ field }) => (
+                                <Select
+                                    {...field}
+                                    isMulti
+                                    isSearchable
+                                    placeholder="Select students..."
+                                    options={userOptions}
+                                    onChange={selected => field.onChange(selected)}
+                                />
+                            )}
+                        />
+                        {errors.students && (
+                            <span className="error">{errors.students.message}</span>
+                        )}
+                    </div>
+                    <button type="submit">Create Group</button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+/* ======================================================
+   AdminGroups Component (Display groups list and modal)
+   ====================================================== */
+
+const AdminGroups = () => {
+    const { GET, POST } = useHttp();
+
+    // Local state for groups and users
+    const [Groups, setGroups] = useState([]);
+    const [users, setUsers] = useState([
+        {
+            id: "3b6df8d7-7add-4eae-9e18-4a2803c4fc13",
+            firstName: "User",
+            lastName: "One"
+        }
+        // Add more default users or fetch them from your API
+    ]);
     const [Loading, setLoading] = useState(true);
+    const [isModalOpen, setModalOpen] = useState(false);
+
+    // Fetch groups and then users data on mount.
     useEffect(() => {
-        GET(null,"groupresource/groups/all",{"Authorization": localStorage.getItem("jwt")})
-            .then((res)=>{
-                setGroups(res.data);
-                console.log(res)
-                setLoading(false);
-                GET(null,"userdataresource/users",{"Authorization": localStorage.getItem("jwt")})
-                    .then((result)=>{
-                        setUsers(result.data)
-                    });
-            })
+        GET(null, "groupresource/groups/all", {
+            Authorization: localStorage.getItem("jwt")
+        }).then(res => {
+            setGroups(res.data);
+            setLoading(false);
+            GET(null, "userdataresource/users", {
+                Authorization: localStorage.getItem("jwt")
+            }).then(result => {
+                setUsers(result.data);
+            });
+        });
     }, []);
 
-    const renderItems = arr =>{
-        const items = arr.map((item, i) =>{
-            return(
-                <>{<AdminGroupItem item={item} Groups={Groups} setGroups={setGroups} />}</>
-            )
-        })
-        return(items)
-    }
-    return(
+    // Render each group using your AdminGroupItem component.
+    const renderItems = arr => {
+        return arr.map(item => (
+            <AdminGroupItem
+                key={item.id}
+                item={item}
+                Groups={Groups}
+                setGroups={setGroups}
+            />
+        ));
+    };
+
+    // Callback for modal submission. Sends POST request and updates groups list.
+    const handleModalSubmit = payload => {
+        POST(
+            {},
+            "groupresource/groups",
+            { Authorization: localStorage.getItem("jwt") },
+            payload
+        ).then(res => {
+            setGroups([...Groups, res.data]);
+        });
+        setModalOpen(false);
+    };
+
+    // Handler for link click to open modal.
+    const handleOpenModal = (e) => {
+        e.preventDefault();
+        setModalOpen(true);
+    };
+
+    return (
         <>
-            {Loading?<div className="oval__loader"><Oval
-                visible={true}
-                height="120"
-                width="120"
-                color="#D90429"
-                secondaryColor="#2B2D42"
-                ariaLabel="oval-loading"
-                wrapperStyle={{}}
-                wrapperClass=""
-            /></div>:<div className="Admin__groups">
-                <div className="Admin__groups__table">
-                    <h2>GroupsList</h2>
-                    <div className="table-wrapper">
-                        <table className="fl-table">
-                            <thead>
-                            <tr>
-                                <th>id</th>
-                                <th>enterYear</th>
-                                <th>endYear</th>
-                                <th>Name</th>
-                                <th>studentsId`s</th>
-                                <th>Remove</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {renderItems(Groups)}
-                            </tbody>
-                        </table>
+            {Loading ? (
+                <div className="oval__loader">
+                    <Oval
+                        visible={true}
+                        height="120"
+                        width="120"
+                        color="#D90429"
+                        secondaryColor="#2B2D42"
+                        ariaLabel="oval-loading"
+                        wrapperStyle={{}}
+                        wrapperClass=""
+                    />
+                </div>
+            ) : (
+                <div className="Admin__groups">
+                    <div className="Admin__groups__table">
+                        <h2>GroupsList</h2>
+                        <div className="table-wrapper">
+                            <table className="fl-table">
+                                <thead>
+                                <tr>
+                                    <th>id</th>
+                                    <th>enterYear</th>
+                                    <th>endYear</th>
+                                    <th>Name</th>
+                                    <th>studentsId's</th>
+                                    <th>Remove</th>
+                                </tr>
+                                </thead>
+                                <tbody>{renderItems(Groups)}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {/* Link that opens the modal */}
+                    <div className="Admin__groups__form">
+                        <a
+                            href="#"
+                            className="learning-groups__btn learning-groups__btn--primary"
+                            onClick={handleOpenModal}
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="lucide lucide-plus learning-groups__icon"
+                            >
+                                <path d="M5 12h14"></path>
+                                <path d="M12 5v14"></path>
+                            </svg>
+                            <span>Create Group</span>
+                        </a>
                     </div>
                 </div>
-                <div className="Admin__groups__form ">
-                    <form onSubmit={handleSubmit(onSubmit)}>
-                        <div className="adminForms">
-                            <div className="nice-form-group">
-                                <label>Enter Year</label>
-                                <input placeholder="2023" {...register("enterYear")} type="number" />
-                                {errors.enterYear && <p>{errors.enterYear.message}</p>}
-                            </div>
-
-                            <div className="nice-form-group">
-                                <label>End Year</label>
-                                <input placeholder="2027" {...register("endYear")} type="number" />
-                                {errors.endYear && <p>{errors.endYear.message}</p>}
-                            </div>
-
-                            <div className="nice-form-group ">
-                                <label>Name</label>
-                                <input  type="text" {...register("name")} />
-                                {errors.name && <p>{errors.name.message}</p>}
-                            </div>
-                        </div>
-
-
-                        <div className="groupSelect" >
-                            <label>Students</label>
-                            <Controller
-                                name="students"
-                                control={control}
-                                render={({ onChange,field }) => (
-                                    <Select
-                                        {...field}
-                                        isMulti
-                                        closeMenuOnSelect={false}
-                                        options={userOptions}
-                                        onChange={(selectedOptions) => {
-                                            field.onChange(selectedOptions);
-                                        }}
-                                    />
-                                )}
-                            />
-                            {errors.students && <p>{errors.students.message}</p>}
-                        </div>
-                        <div className="adminForms"><button type="submit"><div className="svg-wrapper-1">
-                            <div className="svg-wrapper">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    width="24"
-                                    height="24"
-                                >
-                                    <path fill="none" d="M0 0h24v24H0z"></path>
-                                    <path
-                                        fill="currentColor"
-                                        d="M1.946 9.315c-.522-.174-.527-.455.01-.634l19.087-6.362c.529-.176.832.12.684.638l-5.454 19.086c-.15.529-.455.547-.679.045L12 14l6-8-8 6-8.054-2.685z"
-                                    ></path>
-                                </svg>
-                            </div>
-                        </div>
-                            <span>Submit</span></button></div>
-
-                    </form>
-                </div>
-            </div> }
-
+            )}
+            {/* Render the modal and pass users and submission callback */}
+            <CreateGroupModal
+                isOpen={isModalOpen}
+                onClose={() => setModalOpen(false)}
+                onSubmit={handleModalSubmit}
+                users={users}
+            />
         </>
-
-        )
-}
+    );
+};
 
 export default AdminGroups;
