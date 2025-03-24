@@ -15,8 +15,9 @@ const Code = () => {
     const Login = (code) =>{
         Auth("auth/google/authentication",code)
             .then((res)=>{
-                GET(null,"authresource/auth/login",{"Authorization":res.headers.authorization})
+                GET(null,"authresource/auth/login",{})
                     .then((res)=>{
+                        console.log(res.data)
                         dispatch(setUser(res.data))
                         navigate("/")
                     })

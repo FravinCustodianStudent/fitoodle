@@ -29,7 +29,6 @@ const Main = withErrorBoundary(() => {
     const getTasks = () =>{
             GET({studentId:user.id},"userdataresource/groups/by-student",{})
                 .then((res)=>{
-                    console.log(user.data)
                     GET({groupId:res.data.id},"courseresource/courses/by/group",{})
                         .then((result)=>{
                                 GET({eduCourseId:result.data[0].id},"taskresource/tasks/by/course",{})

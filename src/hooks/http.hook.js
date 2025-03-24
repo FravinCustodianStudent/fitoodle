@@ -4,7 +4,19 @@ import code from "../components/login/code";
 
 export const useHttp = () =>{
     const baseUrl = "http://localhost:8888/";
+    const POSTUPT = useCallback(async (params,route,headers,body)=>{
 
+            //TODO: Redirect if no token presented
+            // if (localStorage.getItem('token') === null){
+            //     navigate('/login');
+            // }
+            // setProcess('loading');
+            return customAxios.post("http://localhost:8020/"+route,{
+                ...body,
+                withCredentials: true,
+            },{headers:{...headers},params:{...params}});
+        },
+        []);
     const GET = useCallback(async (params,route,headers)=>{
 
             //TODO: Redirect if no token presented
@@ -27,7 +39,8 @@ export const useHttp = () =>{
             // }
             // setProcess('loading');
             return customAxios.post(baseUrl+route,{
-                ...body
+                ...body,
+                withCredentials: true,
             },{headers:{...headers},params:{...params}});
         },
         []);
@@ -79,5 +92,5 @@ export const useHttp = () =>{
                 })
         },
         []);
-    return {GET,POST,PUT,DELETE,Auth};
+    return {GET,POST,PUT,DELETE,Auth,POSTUPT};
 }

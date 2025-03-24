@@ -1,667 +1,700 @@
 import React, { useState } from 'react';
 import {
-    Plus,
-    Search,
-    BarChart2,
-    Users,
-    BookOpen,
-    Calendar,
-    Clock,
-    ListTodo
-} from 'lucide-react';
+    Button,
+    Input,
+    InputNumber,
+    Row,
+    Col,
+    Card,
+    List,
+    Form,
+    Checkbox,
+    Avatar,
+    message,
+    Modal,
+    Select,
+} from 'antd';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import {useHttp} from "../../../hooks/http.hook";
 
-import './LearningGroups.scss'; // SCSS со стилями
+const { Option } = Select;
 
-const LearningGroups = () => {
-    const [selectedGroup, setSelectedGroup] = useState(null);
-    const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'students' | 'tasks'
-    const [isCreatingTask, setIsCreatingTask] = useState(false);
-    const [newTask, setNewTask] = useState({
-        type: 'assignment',
-        status: 'active',
+/**
+ * CreateGroupModal Component
+ * A modal form to create a new group.
+ * It includes fields for:
+ * - enterYear (number)
+ * - specNameShort (text)
+ * - groupNumber (number)
+ * - sub-groups (with a minimum of one sub-group)
+ *
+ * The form is wrapped in a Form.Provider.
+ * The submit button is a native <Button htmlType="submit" /> within the form.
+ */
+// CreateGroupModal collects group data from the user.
+const CreateGroupModal = ({ visible, onCreate, onCancel, loading }) => {
+    const [form] = Form.useForm();
+
+    const handleFinish = (values) => {
+        onCreate(values);
+        form.resetFields();
+    };
+
+    return (
+        <Modal
+            visible={visible}
+            title="Create a New Group"
+            footer={null} // Submit button is inside the form.
+            onCancel={() => {
+                form.resetFields();
+                onCancel();
+            }}
+        >
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleFinish}
+                name="create_group_form"
+                initialValues={{
+                    active: true,
+                    // Initialize with one empty subgroup
+                    subGroups: [{}],
+                }}
+            >
+                <Form.Item
+                    name="enterYear"
+                    label="Enter Year"
+                    rules={[{ required: true, message: 'Please enter the entry year' }]}
+                >
+                    <InputNumber style={{ width: '100%' }} placeholder="e.g., 2025" />
+                </Form.Item>
+                <Form.Item
+                    name="specNameShort"
+                    label="Specialization (Short Name)"
+                    rules={[{ required: true, message: 'Please enter the specialization short name' }]}
+                >
+                    <Input placeholder="e.g., ІПЗ" />
+                </Form.Item>
+                <Form.Item
+                    name="groupNumber"
+                    label="Group Number"
+                    rules={[{ required: true, message: 'Please enter the group number' }]}
+                >
+                    <InputNumber style={{ width: '100%' }} placeholder="e.g., 10" />
+                </Form.Item>
+                <Form.Item name="active" label="Active" valuePropName="checked">
+                    <Input type="checkbox" />
+                </Form.Item>
+                {/* Subgroup logic */}
+                <Form.List name="subGroups">
+                    {(fields, { add, remove }) => (
+                        <>
+                            {fields.map(({ key, name, ...restField }) => (
+                                <Card key={key} style={{ marginBottom: 16 }}>
+                                    <Form.Item
+                                        {...restField}
+                                        name={[name, 'subGroupNumber']}
+                                        label="Sub Group Number"
+                                        rules={[{ required: true, message: 'Missing sub group number' }]}
+                                    >
+                                        <InputNumber style={{ width: '100%' }} placeholder="Sub Group Number" />
+                                    </Form.Item>
+                                    {fields.length > 1 && (
+                                        <Button type="link" onClick={() => remove(name)}>
+                                            Remove Sub Group
+                                        </Button>
+                                    )}
+                                </Card>
+                            ))}
+                            <Form.Item>
+                                <Button type="dashed" onClick={() => add()} block>
+                                    Add Sub Group
+                                </Button>
+                            </Form.Item>
+                        </>
+                    )}
+                </Form.List>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" block loading={loading}>
+                        Create Group
+                    </Button>
+                </Form.Item>
+            </Form>
+        </Modal>
+    );
+};
+
+/**
+ * EditStudentsModal Component
+ * A modal for editing students in a group.
+ * Left side: List of current group students with a remove button (with confirmation).
+ * Right side: A search input and list of available students (from a simulated DB) with an Add button.
+ */
+const EditStudentsModal = ({ visible, groupStudents, availableStudents, onAddStudent, onRemoveStudent, onCancel }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredAvailableStudents = availableStudents.filter((student) => {
+        const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
+        return (
+            fullName.includes(searchTerm.toLowerCase()) ||
+            student.contactEmail.toLowerCase().includes(searchTerm.toLowerCase())
+        );
     });
 
-    // Мок-данные (две группы)
-    const groups = [
+    return (
+        <Modal
+            visible={visible}
+            title="Edit Students"
+            onCancel={onCancel}
+            footer={null}
+            width={800}
+        >
+            <Row gutter={16}>
+                <Col span={12}>
+                    <h3>Current Group Students</h3>
+                    <List
+                        dataSource={groupStudents}
+                        renderItem={(student) => (
+                            <List.Item
+                                actions={[
+                                    <ModalConfirmRemoveStudent
+                                        student={student}
+                                        onConfirm={() => onRemoveStudent(student)}
+                                    />,
+                                ]}
+                            >
+                                <List.Item.Meta
+                                    avatar={<Avatar src={student.imageUrl} />}
+                                    title={`${student.firstName} ${student.lastName}`}
+                                    description={student.contactEmail}
+                                />
+                            </List.Item>
+                        )}
+                    />
+                </Col>
+                <Col span={12}>
+                    <h3>Available Students</h3>
+                    <Input.Search
+                        placeholder="Search available students"
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ marginBottom: 8 }}
+                    />
+                    <List
+                        dataSource={filteredAvailableStudents}
+                        renderItem={(student) => (
+                            <List.Item
+                                actions={[
+                                    <Button type="link" onClick={() => onAddStudent(student)}>
+                                        Add
+                                    </Button>,
+                                ]}
+                            >
+                                <List.Item.Meta
+                                    avatar={<Avatar src={student.imageUrl} />}
+                                    title={`${student.firstName} ${student.lastName}`}
+                                    description={student.contactEmail}
+                                />
+                            </List.Item>
+                        )}
+                    />
+                </Col>
+            </Row>
+        </Modal>
+    );
+};
+
+/**
+ * ModalConfirmRemoveStudent Component
+ * Wraps a Remove button in a confirmation popup.
+ */
+const ModalConfirmRemoveStudent = ({ student, onConfirm }) => (
+    <div>
+        <Button type="link" onClick={() => {
+            Modal.confirm({
+                title: 'Are you sure you want to remove this student?',
+                onOk: onConfirm,
+                okText: 'Yes',
+                cancelText: 'No',
+            });
+        }}>
+            Remove
+        </Button>
+    </div>
+);
+
+/**
+ * EditSubGroupsModal Component
+ * A modal for editing sub groups of a selected group.
+ * For each sub group, you can set a sub group number and assign students (from the group's student list).
+ * You can add new sub groups and delete existing ones (if more than one exists).
+ */
+const EditSubGroupsModal = ({ visible, initialSubGroups, groupStudents, onSubmit, onCancel }) => {
+    const [form] = Form.useForm();
+
+    // Options for the multi-select come from the group's students.
+    const options = groupStudents.map((student) => ({
+        value: student.id,
+        label: `${student.firstName} ${student.lastName}`,
+    }));
+
+    const handleFinish = (values) => {
+        onSubmit(values.subGroups);
+        form.resetFields();
+    };
+
+    return (
+        <Modal
+            visible={visible}
+            title="Edit Sub Groups"
+            onCancel={() => {
+                form.resetFields();
+                onCancel();
+            }}
+            footer={null}
+            width={800}
+        >
+            <Form form={form} layout="vertical" name="edit_subgroups_form" initialValues={{ subGroups: initialSubGroups }}>
+                <Form.List name="subGroups">
+                    {(fields, { add, remove }) => (
+                        <>
+                            {fields.map(({ key, name, ...restField }) => (
+                                <Card key={key} style={{ marginBottom: 16 }}>
+                                    <Row gutter={16}>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                {...restField}
+                                                name={[name, 'subGroupNumber']}
+                                                label="Sub Group Number"
+                                                rules={[{ required: true, message: 'Missing sub group number' }]}
+                                            >
+                                                <InputNumber style={{ width: '100%' }} placeholder="Sub Group Number" />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={12}>
+                                            <Form.Item
+                                                {...restField}
+                                                name={[name, 'students']}
+                                                label="Assigned Students"
+                                                rules={[{ required: true, message: 'Select at least one student' }]}
+                                            >
+                                                <Select mode="multiple" placeholder="Select students" options={options} />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={4}>
+                                            {fields.length > 1 && (
+                                                <Button type="link" onClick={() => remove(name)}>
+                                                    Delete
+                                                </Button>
+                                            )}
+                                        </Col>
+                                    </Row>
+                                </Card>
+                            ))}
+                            <Form.Item>
+                                <Button type="dashed" onClick={() => add()} block>
+                                    Add Sub Group
+                                </Button>
+                            </Form.Item>
+                        </>
+                    )}
+                </Form.List>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" onClick={() => form.submit()} block>
+                        Save Changes
+                    </Button>
+                </Form.Item>
+            </Form>
+        </Modal>
+    );
+};
+
+/**
+ * EditGroupModal Component
+ * A modal for editing the selected group's details.
+ * You can change the group's name and its active status.
+ */
+const EditGroupModal = ({ visible, group, onUpdate, onCancel }) => {
+    const [form] = Form.useForm();
+
+    const handleFinish = (values) => {
+        onUpdate(values);
+        form.resetFields();
+    };
+
+    return (
+        <Modal
+            visible={visible}
+            title="Edit Group"
+            onCancel={() => {
+                form.resetFields();
+                onCancel();
+            }}
+            footer={null}
+        >
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleFinish}
+                initialValues={{ specNameShort: group.specNameShort, active: group.active }}
+            >
+                <Form.Item
+                    name="specNameShort"
+                    label="Group Name"
+                    rules={[{ required: true, message: 'Please enter the group name' }]}
+                >
+                    <Input placeholder="Enter group name" />
+                </Form.Item>
+                <Form.Item name="active" label="Active" valuePropName="checked">
+                    <Checkbox>Active?</Checkbox>
+                </Form.Item>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" block>
+                        Save Changes
+                    </Button>
+                </Form.Item>
+            </Form>
+        </Modal>
+    );
+};
+
+/**
+ * StudentList Component
+ * Displays a list of students for a selected group.
+ * Includes an "Edit Students" button near the header.
+ */
+const StudentList = ({ students, onEdit }) => (
+    <div>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
+            <Col>
+                <h3>Students</h3>
+            </Col>
+            <Col>
+                <Button type="link" onClick={onEdit}>
+                    Edit Students
+                </Button>
+            </Col>
+        </Row>
+        <List
+            dataSource={students}
+            renderItem={(student) => (
+                <List.Item>
+                    <Card style={{ width: '100%' }}>
+                        <Card.Meta
+                            avatar={<Avatar src={student.imageUrl} />}
+                            title={`${student.firstName} ${student.lastName} ${student.patronomic}`}
+                            description={
+                                <div>
+                                    <div>Email: {student.contactEmail}</div>
+                                    <div>Roles: {student.roles.join(', ')}</div>
+                                    <div>Status: {student.active ? 'Active' : 'Inactive'}</div>
+                                </div>
+                            }
+                        />
+                    </Card>
+                </List.Item>
+            )}
+        />
+    </div>
+);
+
+/**
+ * SubGroupList Component
+ * Displays a list of sub groups for a selected group.
+ * Includes an "Edit Sub Groups" button near the header.
+ */
+const SubGroupList = ({ subGroups, onEdit }) => (
+    <div>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
+            <Col>
+                <h3>Sub Groups</h3>
+            </Col>
+            <Col>
+                <Button type="link" onClick={onEdit}>
+                    Edit Sub Groups
+                </Button>
+            </Col>
+        </Row>
+        <List
+            dataSource={subGroups}
+            renderItem={(subGroup) => (
+                <List.Item>
+                    <Card style={{ width: '100%' }}>
+                        <Card.Meta
+                            title={`Sub Group Number: ${subGroup.subGroupNumber}`}
+                            description={<div>Students: {subGroup.students && subGroup.students.join(', ')}</div>}
+                        />
+                    </Card>
+                </List.Item>
+            )}
+        />
+    </div>
+);
+
+/**
+ * LearningGroups Component
+ * Main component that displays a list of groups.
+ * When a group is selected, its details are shown with separate lists for students and sub groups.
+ * Edit buttons are provided for Group, Students, and Sub Groups.
+ * Additional modals allow editing of group details, students, and sub groups.
+ */
+const LearningGroups = () => {
+    const { POST } = useHttp(); // Use your custom HTTP hook's POST method.
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [groups, setGroups] = useState([
         {
-            id: '1',
-            name: 'Web Development Basics',
-            instructor: 'John Smith',
-            schedule: 'Mon, Wed 10:00 AM',
-            averageScore: 82,
-            totalStudents: 15,
+            id: 'f383664c-zz7e-4d9d-ad2d-f1e4964a9e3a',
+            enterYear: 2025,
+            specNameShort: 'ІПЗ',
+            groupNumber: 10,
             students: [
                 {
-                    id: 's1',
-                    name: 'Alex Johnson',
-                    email: 'alex.j@example.com',
-                    averageScore: 85,
-                    attendance: 90,
-                    recentActivity: [
-                        {
-                            id: 'a1',
-                            type: 'test',
-                            title: 'HTML Fundamentals',
-                            date: '2024-02-15',
-                            score: 88,
-                        },
-                        {
-                            id: 'a2',
-                            type: 'task',
-                            title: 'CSS Layout Project',
-                            date: '2024-02-14',
-                            status: 'pending',
-                            dueDate: '2024-02-20',
-                        },
-                    ],
-                },
-                {
-                    id: 's2',
-                    name: 'Emily Davis',
-                    email: 'emily.d@example.com',
-                    averageScore: 78,
-                    attendance: 85,
-                    recentActivity: [
-                        {
-                            id: 'a3',
-                            type: 'lesson',
-                            title: 'Responsive Design',
-                            date: '2024-02-16',
-                        },
-                    ],
+                    id: 'f383664c-937e-4d9d-ad2d-f1e4964a9e3a',
+                    firstName: 'Maksym',
+                    lastName: 'Shevchuk',
+                    patronomic: 'Yuriyovych',
+                    contactEmail: 'www.max_shevchuk@knu.ua',
+                    imageUrl:
+                        'https://static.wikia.nocookie.net/boowser/images/5/5d/Morshu.jpg/revision/latest?cb=20210207011259',
+                    roles: ['GUEST'],
+                    active: true,
                 },
             ],
-            tasks: [
+            subGroups: [
                 {
-                    id: 't1',
-                    type: 'test',
-                    title: 'JavaScript Basics Quiz',
-                    description: 'Test covering fundamental JavaScript concepts',
-                    dueDate: '2024-02-25',
-                    status: 'active',
-                    totalPoints: 100,
-                    submissions: 12,
-                    averageScore: 85,
-                },
-                {
-                    id: 't2',
-                    type: 'assignment',
-                    title: 'Responsive Website Project',
-                    description: 'Create a responsive website using HTML and CSS',
-                    dueDate: '2024-03-01',
-                    status: 'active',
-                    totalPoints: 50,
-                    submissions: 8,
-                    averageScore: 78,
+                    id: 'sub1',
+                    subGroupNumber: 1,
+                    students: ['f383664c-937e-4d9d-ad2d-f1e4964a9e3a'],
                 },
             ],
+            active: true,
+        },
+    ]);
+    const [loading, setLoading] = useState(false);
+    const [selectedGroup, setSelectedGroup] = useState(null);
+    const [isGroupModalVisible, setIsGroupModalVisible] = useState(false);
+    const [isEditStudentsModalVisible, setIsEditStudentsModalVisible] = useState(false);
+    const [isEditSubGroupsModalVisible, setIsEditSubGroupsModalVisible] = useState(false);
+    const [isEditGroupModalVisible, setIsEditGroupModalVisible] = useState(false);
+
+    // Simulated available students in DB.
+    const dbAvailableStudents = [
+        {
+            id: 's2',
+            firstName: 'Emily',
+            lastName: 'Davis',
+            patronomic: 'Example',
+            contactEmail: 'emily.d@example.com',
+            imageUrl: 'https://randomuser.me/api/portraits/women/1.jpg',
+            roles: ['STUDENT'],
+            active: true,
         },
         {
-            id: '2',
-            name: 'Advanced JavaScript',
-            instructor: 'Jane Doe',
-            schedule: 'Tue, Thu 2:00 PM',
-            averageScore: 88,
-            totalStudents: 20,
-            students: [
-                {
-                    id: 's3',
-                    name: 'Michael Brown',
-                    email: 'michael.b@example.com',
-                    averageScore: 90,
-                    attendance: 95,
-                    recentActivity: [
-                        {
-                            id: 'a4',
-                            type: 'test',
-                            title: 'ES6 Features Quiz',
-                            date: '2024-02-18',
-                            score: 92,
-                        },
-                    ],
-                },
-                {
-                    id: 's4',
-                    name: 'Sarah Wilson',
-                    email: 'sarah.w@example.com',
-                    averageScore: 86,
-                    attendance: 88,
-                    recentActivity: [
-                        {
-                            id: 'a5',
-                            type: 'task',
-                            title: 'Async Programming Assignment',
-                            date: '2024-02-17',
-                            status: 'completed',
-                            dueDate: '2024-02-20',
-                        },
-                    ],
-                },
-            ],
-            tasks: [
-                {
-                    id: 't3',
-                    type: 'assignment',
-                    title: 'Asynchronous JavaScript',
-                    description: 'Complete a project on async programming',
-                    dueDate: '2024-03-05',
-                    status: 'active',
-                    totalPoints: 75,
-                    submissions: 15,
-                    averageScore: 88,
-                },
-            ],
+            id: 's3',
+            firstName: 'John',
+            lastName: 'Doe',
+            patronomic: '',
+            contactEmail: 'john.doe@example.com',
+            imageUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
+            roles: ['STUDENT'],
+            active: true,
+        },
+        {
+            id: 's4',
+            firstName: 'Jane',
+            lastName: 'Smith',
+            patronomic: '',
+            contactEmail: 'jane.smith@example.com',
+            imageUrl: 'https://randomuser.me/api/portraits/women/2.jpg',
+            roles: ['STUDENT'],
+            active: true,
         },
     ];
 
-    // Создание задачи (упрощённый вариант)
-    const handleCreateTask = () => {
-        if (!selectedGroup) return;
-        console.log('Creating new task:', newTask);
-        setIsCreatingTask(false);
-        setNewTask({ type: 'assignment', status: 'active' });
+    // Compute available students for addition by filtering out those already in the group.
+    const getAvailableStudents = () => {
+        if (!selectedGroup) return [];
+        const groupStudentIds = new Set(selectedGroup.students.map((s) => s.id));
+        return dbAvailableStudents.filter((s) => !groupStudentIds.has(s.id));
+    };
+    const handleCreateGroup = (groupData) => {
+        setLoading(true);
+
+        POST({}, 'userdataresource/groups', {}, groupData)
+            .then((response) => {
+                // Use the returned group from the backend
+                const newGroup = response.data;
+                setGroups([...groups, newGroup]);
+                message.success(`Group "${newGroup.specNameShort}" created successfully!`);
+                setIsModalVisible(false);
+            })
+            .catch((error) => {
+                console.error('Error creating group:', error);
+                message.error('Failed to create group.');
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     };
 
-    /*****************************
-     * RENDER-функции для вкладок
-     *****************************/
 
-        // Overview
-    const renderOverviewTab = () => (
-            <div className="learning-groups__overview-tab">
-                {/* Карточка с основной инфой */}
-                <div className="learning-groups__card learning-groups__card--info">
-                    <div className="learning-groups__info-header">
-                        <div>
-                            <h2 className="learning-groups__info-name">
-                                {selectedGroup?.name}
-                            </h2>
-                            <p className="learning-groups__info-email">
-                                Instructor: {selectedGroup?.instructor}
-                            </p>
-                            <p className="learning-groups__info-email">
-                                Schedule: {selectedGroup?.schedule}
-                            </p>
-                        </div>
-                        <div className="learning-groups__info-header-right">
-                            <div className="learning-groups__info-score">
-                                {selectedGroup?.averageScore}%
-                            </div>
-                            <p className="learning-groups__info-score-label">Group Average</p>
-                        </div>
-                    </div>
+    // Handlers for editing group details.
+    const handleEditGroup = () => {
+        setIsEditGroupModalVisible(true);
+    };
 
-                    {/* Небольшая статистика: кол-во студентов, тестов, заданий */}
-                    <div className="learning-groups__info-stats">
-                        <div className="learning-groups__info-stat">
-                            <div className="learning-groups__info-stat-value">
-                                {selectedGroup?.totalStudents}
-                            </div>
-                            <p className="learning-groups__info-stat-label">Total Students</p>
-                        </div>
-                        <div className="learning-groups__info-stat">
-                            <div className="learning-groups__info-stat-value">
-                                {selectedGroup?.tasks.filter((t) => t.type === 'test').length}
-                            </div>
-                            <p className="learning-groups__info-stat-label">Active Tests</p>
-                        </div>
-                    </div>
-                </div>
+    const handleUpdateGroup = (updatedValues) => {
+        if (!selectedGroup) return;
+        const updatedGroup = {
+            ...selectedGroup,
+            specNameShort: updatedValues.specNameShort,
+            active: updatedValues.active,
+        };
+        setSelectedGroup(updatedGroup);
+        setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
+        message.success('Group updated.');
+        setIsEditGroupModalVisible(false);
+    };
 
-                {/* Карточка "Recent Activity" */}
-                <div className="learning-groups__card">
-                    <div className="learning-groups__card-header">
-                        <h3 className="learning-groups__card-title">Recent Activity</h3>
-                    </div>
-                    <div className="learning-groups__card-list">
-                        {selectedGroup?.students.flatMap((student) =>
-                                student.recentActivity.map((activity) => (
-                                    <div key={activity.id} className="learning-groups__card-item">
-                                        <div className="learning-groups__card-item-row">
-                                            <div className="learning-groups__card-item-left">
-                                                {activity.type === 'test' ? (
-                                                    <BookOpen className="learning-groups__icon learning-groups__icon--gray-small" />
-                                                ) : activity.type === 'task' ? (
-                                                    <ListTodo className="learning-groups__icon learning-groups__icon--gray-small" />
-                                                ) : (
-                                                    <Calendar className="learning-groups__icon learning-groups__icon--gray-small" />
-                                                )}
-                                                <div>
-                                                    <p className="learning-groups__card-item-title">
-                                                        {activity.title}
-                                                    </p>
-                                                    <p className="learning-groups__card-item-sub">
-                                                        {student.name}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="learning-groups__card-item-right">
-                                                {/* Если есть score */}
-                                                {activity.score && (
-                                                    <span className="learning-groups__badge learning-groups__badge--indigo">
-                        {activity.score}%
-                      </span>
-                                                )}
-                                                {/* Если есть статус (pending, completed, etc.) */}
-                                                {activity.status && (
-                                                    <span
-                                                        className={`
-                          learning-groups__badge
-                          ${
-                                                            activity.status === 'completed'
-                                                                ? 'learning-groups__badge--green'
-                                                                : activity.status === 'overdue'
-                                                                    ? 'learning-groups__badge--red'
-                                                                    : 'learning-groups__badge--yellow'
-                                                        }
-                        `}
-                                                    >
-                        {activity.status}
-                      </span>
-                                                )}
-                                                <span className="learning-groups__card-item-date">
-                      {activity.date}
-                    </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                        )}
-                    </div>
-                </div>
-            </div>
-        );
+    // Handlers for editing students.
+    const handleAddStudent = (student) => {
+        if (!selectedGroup) return;
+        if (selectedGroup.students.find((s) => s.id === student.id)) {
+            message.warning('Student already added.');
+            return;
+        }
+        const updatedGroup = {
+            ...selectedGroup,
+            students: [...selectedGroup.students, student],
+        };
+        setSelectedGroup(updatedGroup);
+        setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
+        message.success(`${student.firstName} added.`);
+    };
 
-    // Students
-    const renderStudentsTab = () => (
-        <div className="learning-groups__card">
-            <div className="learning-groups__card-header">
-                <h3 className="learning-groups__card-title">Students</h3>
-            </div>
-            <div className="learning-groups__card-list">
-                {selectedGroup?.students.map((student) => (
-                    <div key={student.id} className="learning-groups__card-item">
-                        <div className="learning-groups__card-item-row learning-groups__card-item-row--space">
-                            <div>
-                                <h4 className="learning-groups__student-name">{student.name}</h4>
-                                <p className="learning-groups__student-email">{student.email}</p>
-                            </div>
-                            <div className="learning-groups__student-score">
-                                <div className="learning-groups__student-score-top">
-                                    <BarChart2 className="learning-groups__icon learning-groups__icon--gray-small" />
-                                    <span className="learning-groups__student-score-value">
-                    {student.averageScore}%
-                  </span>
-                                </div>
-                                <p className="learning-groups__student-score-label">Average Score</p>
-                            </div>
-                        </div>
+    const handleRemoveStudent = (student) => {
+        if (!selectedGroup) return;
+        const updatedGroup = {
+            ...selectedGroup,
+            students: selectedGroup.students.filter((s) => s.id !== student.id),
+        };
+        setSelectedGroup(updatedGroup);
+        setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
+        message.success(`${student.firstName} removed.`);
+    };
 
-                        {/* Недавняя активность конкретного студента */}
-                        <div className="learning-groups__student-activity">
-                            <h5 className="learning-groups__student-activity-title">
-                                Recent Activity
-                            </h5>
-                            <div className="learning-groups__student-activity-list">
-                                {student.recentActivity.map((activity) => (
-                                    <div key={activity.id} className="learning-groups__activity-item">
-                                        <div className="learning-groups__activity-left">
-                                            {activity.type === 'test' ? (
-                                                <BookOpen className="learning-groups__icon learning-groups__icon--gray-small" />
-                                            ) : activity.type === 'task' ? (
-                                                <ListTodo className="learning-groups__icon learning-groups__icon--gray-small" />
-                                            ) : (
-                                                <Calendar className="learning-groups__icon learning-groups__icon--gray-small" />
-                                            )}
-                                            <span className="learning-groups__activity-title">
-                        {activity.title}
-                      </span>
-                                        </div>
-                                        <div className="learning-groups__activity-right">
-                                            {activity.score && (
-                                                <span className="learning-groups__badge learning-groups__badge--indigo">
-                          {activity.score}%
-                        </span>
-                                            )}
-                                            {activity.status && (
-                                                <span
-                                                    className={`
-                            learning-groups__badge
-                            ${
-                                                        activity.status === 'completed'
-                                                            ? 'learning-groups__badge--green'
-                                                            : activity.status === 'overdue'
-                                                                ? 'learning-groups__badge--red'
-                                                                : 'learning-groups__badge--yellow'
-                                                    }
-                          `}
-                                                >
-                          {activity.status}
-                        </span>
-                                            )}
-                                            <span className="learning-groups__activity-date">
-                        {activity.date}
-                      </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
+    // Handler for updating sub groups.
+    const handleUpdateSubGroups = (newSubGroups) => {
+        if (!selectedGroup) return;
+        const updatedGroup = {
+            ...selectedGroup,
+            subGroups: newSubGroups,
+        };
+        setSelectedGroup(updatedGroup);
+        setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
+        message.success('Sub Groups updated.');
+        setIsEditSubGroupsModalVisible(false);
+    };
 
-    // Tasks
-    const renderTasksTab = () => (
-        <div className="learning-groups__card">
-            <div className="learning-groups__card-header">
-                <div className="learning-groups__card-item-row learning-groups__card-item-row--space">
-                    <h3 className="learning-groups__card-title">Tasks and Assignments</h3>
-                    <a
-                        href="#"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            setIsCreatingTask(true);
-                        }}
-                        className="learning-groups__btn learning-groups__btn--primary"
-                    >
-                        <Plus className="learning-groups__icon" />
-                        <span>Create Task</span>
-                    </a>
-                </div>
-            </div>
-
-            {/* Если нажали Create Task */}
-            {isCreatingTask ? (
-                <div className="learning-groups__card-list" style={{ padding: '1rem' }}>
-                    <div className="learning-groups__form" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div>
-                            <label className="learning-groups__label">Task Type</label>
-                            <select
-                                value={newTask.type}
-                                onChange={(e) => setNewTask({ ...newTask, type: e.target.value })}
-                                className="learning-groups__input"
-                            >
-                                <option value="assignment">Assignment</option>
-                                <option value="test">Test</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="learning-groups__label">Title</label>
-                            <input
-                                type="text"
-                                value={newTask.title || ''}
-                                onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                                className="learning-groups__input"
-                                placeholder="Enter task title"
-                            />
-                        </div>
-                        <div>
-                            <label className="learning-groups__label">Description</label>
-                            <textarea
-                                value={newTask.description || ''}
-                                onChange={(e) =>
-                                    setNewTask({ ...newTask, description: e.target.value })
-                                }
-                                className="learning-groups__input"
-                                rows={3}
-                                placeholder="Enter task description"
-                            />
-                        </div>
-                        <div>
-                            <label className="learning-groups__label">Due Date</label>
-                            <input
-                                type="date"
-                                value={newTask.dueDate || ''}
-                                onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                                className="learning-groups__input"
-                            />
-                        </div>
-                        {newTask.type === 'test' && (
-                            <div>
-                                <label className="learning-groups__label">Total Points</label>
-                                <input
-                                    type="number"
-                                    value={newTask.totalPoints || ''}
-                                    onChange={(e) =>
-                                        setNewTask({ ...newTask, totalPoints: parseInt(e.target.value) })
-                                    }
-                                    className="learning-groups__input"
-                                    placeholder="Enter total points"
-                                />
-                            </div>
-                        )}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                            <a
-                                href="#"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setIsCreatingTask(false);
-                                }}
-                                className="learning-groups__btn learning-groups__btn--outline"
-                            >
-                                Cancel
-                            </a>
-                            <a
-                                href="#"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    handleCreateTask();
-                                }}
-                                className="learning-groups__btn learning-groups__btn--primary"
-                            >
-                                Create Task
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div className="learning-groups__card-list">
-                    {selectedGroup?.tasks.map((task) => (
-                        <div key={task.id} className="learning-groups__card-item">
-                            <div className="learning-groups__card-item-row learning-groups__card-item-row--space">
-                                <div>
-                                    <div className="learning-groups__task-top">
-                                        <h4 className="learning-groups__task-title">{task.title}</h4>
-                                        <span
-                                            className={`
-                        learning-groups__badge
-                        ${
-                                                task.type === 'test'
-                                                    ? 'learning-groups__badge--purple'
-                                                    : 'learning-groups__badge--blue'
-                                            }
-                      `}
-                                        >
-                      {task.type}
-                    </span>
-                                    </div>
-                                    <p className="learning-groups__task-desc">{task.description}</p>
-                                </div>
-                                <div className="learning-groups__task-deadline">
-                                    <div className="learning-groups__task-deadline-row">
-                                        <Clock className="learning-groups__icon learning-groups__icon--gray-small" />
-                                        <span className="learning-groups__task-deadline-date">
-                      Due: {task.dueDate}
-                    </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="learning-groups__task-stats-grid">
-                                <div className="learning-groups__task-stat">
-                                    <div className="learning-groups__task-stat-value">
-                                        {task.submissions}
-                                    </div>
-                                    <p className="learning-groups__task-stat-label">Submissions</p>
-                                </div>
-                                {task.averageScore !== undefined && (
-                                    <div className="learning-groups__task-stat">
-                                        <div className="learning-groups__task-stat-value">
-                                            {task.averageScore}%
-                                        </div>
-                                        <p className="learning-groups__task-stat-label">Average Score</p>
-                                    </div>
-                                )}
-                                {task.totalPoints !== undefined && (
-                                    <div className="learning-groups__task-stat">
-                                        <div className="learning-groups__task-stat-value">
-                                            {task.totalPoints}
-                                        </div>
-                                        <p className="learning-groups__task-stat-label">Total Points</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-
-    /***********************
-     * Основной рендер
-     ***********************/
-    return (
-        <div className="learning-groups">
-            {/* Заголовок + кнопка создания группы */}
-            <div className="learning-groups__header-row">
-                <h1 className="learning-groups__title">Learning Groups</h1>
-                <a
-                    href="#"
-                    className="learning-groups__btn learning-groups__btn--primary"
-                    onClick={(e) => {
-                        e.preventDefault();
-                        console.log('Create Group clicked!');
+    const renderGroupList = () => (
+        <List
+            header={<Input.Search placeholder="Search groups..." prefix={<SearchOutlined />} />}
+            dataSource={groups}
+            renderItem={(group) => (
+                <List.Item
+                    onClick={() => setSelectedGroup(group)}
+                    style={{
+                        cursor: 'pointer',
+                        background: selectedGroup?.id === group.id ? '#f0f2f5' : '#fff',
+                        marginBottom: 8,
+                        padding: 16,
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                     }}
                 >
-                    <Plus className="learning-groups__icon" />
-                    <span>Create Group</span>
-                </a>
-            </div>
+                    <List.Item.Meta
+                        title={`[${group.enterYear}] ${group.specNameShort} - Group ${group.groupNumber}`}
+                        description={group.active ? 'Active' : 'Inactive'}
+                    />
+                </List.Item>
+            )}
+        />
+    );
 
-            {/* Основная сетка: левая панель + правая часть */}
-            <div className="learning-groups__main-grid">
-                {/* Левая панель: список групп */}
-                <div className="learning-groups__list-panel">
-                    <div className="learning-groups__list-panel-header">
-                        <div className="learning-groups__list-panel-search">
-                            <Search className="learning-groups__list-panel-search-icon" />
-                            <input
-                                type="text"
-                                placeholder="Search groups..."
-                                className="learning-groups__list-panel-search-input"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="learning-groups__groups-list">
-                        {groups.map((group) => (
-                            <a
-                                key={group.id}
-                                href="#"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    setSelectedGroup(group);
-                                    setActiveTab('overview');
-                                }}
-                                className={`learning-groups__group-link ${
-                                    selectedGroup?.id === group.id
-                                        ? 'learning-groups__group-link--active'
-                                        : ''
-                                }`}
-                            >
-                                <div className="learning-groups__group-link-content">
-                                    <div>
-                                        <h3 className="learning-groups__group-name">{group.name}</h3>
-                                        <p className="learning-groups__group-sub">{group.instructor}</p>
-                                        <p className="learning-groups__group-sub">{group.schedule}</p>
-                                    </div>
-                                    <div className="learning-groups__group-info-right">
-                                        <div className="learning-groups__group-info-students">
-                                            <Users className="learning-groups__icon learning-groups__icon--gray-small" />
-                                            <span className="learning-groups__group-student-count">
-                        {group.totalStudents}
-                      </span>
-                                        </div>
-                                        <span className="learning-groups__badge learning-groups__badge--indigo">
-                      {group.averageScore}%
-                    </span>
-                                    </div>
-                                </div>
-                            </a>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Правая часть: детали группы */}
-                <div className="learning-groups__details-panel">
+    return (
+        <div style={{ width: '100%', padding: 24 }}>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+                <Col>
+                    <h1>Learning Groups</h1>
+                </Col>
+                <Col>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsGroupModalVisible(true)}>
+                        Create Group
+                    </Button>
+                </Col>
+            </Row>
+            <Row gutter={16}>
+                <Col xs={24} lg={8}>
+                    {renderGroupList()}
+                </Col>
+                <Col xs={24} lg={16}>
                     {selectedGroup ? (
-                        <div className="learning-groups__details">
-                            {/* Вкладки */}
-                            <div className="learning-groups__tabs-card">
-                                <nav className="learning-groups__tabs-nav">
-                                    <a
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            setActiveTab('overview');
-                                        }}
-                                        className={`learning-groups__tab-link ${
-                                            activeTab === 'overview'
-                                                ? 'learning-groups__tab-link--active'
-                                                : ''
-                                        }`}
-                                    >
-                                        Overview
-                                    </a>
-                                    <a
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            setActiveTab('students');
-                                        }}
-                                        className={`learning-groups__tab-link ${
-                                            activeTab === 'students'
-                                                ? 'learning-groups__tab-link--active'
-                                                : ''
-                                        }`}
-                                    >
-                                        Students
-                                    </a>
-                                    <a
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            setActiveTab('tasks');
-                                        }}
-                                        className={`learning-groups__tab-link ${
-                                            activeTab === 'tasks'
-                                                ? 'learning-groups__tab-link--active'
-                                                : ''
-                                        }`}
-                                    >
-                                        Tasks
-                                    </a>
-                                </nav>
-                            </div>
-
-                            {/* Содержимое вкладок */}
-                            {activeTab === 'overview' && renderOverviewTab()}
-                            {activeTab === 'students' && renderStudentsTab()}
-                            {activeTab === 'tasks' && renderTasksTab()}
+                        <div>
+                            <Card
+                                title={`Group Details: [${selectedGroup.enterYear}] ${selectedGroup.specNameShort} - Group ${selectedGroup.groupNumber}`}
+                                extra={<Button type="link" onClick={handleEditGroup}>Edit Group</Button>}
+                                style={{ marginBottom: 16 }}
+                            >
+                                <p>
+                                    <strong>Status:</strong> {selectedGroup.active ? 'Active' : 'Inactive'}
+                                </p>
+                            </Card>
+                            <Row gutter={16}>
+                                <Col xs={24} md={12}>
+                                    <StudentList students={selectedGroup.students} onEdit={() => setIsEditStudentsModalVisible(true)} />
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <SubGroupList subGroups={selectedGroup.subGroups} onEdit={() => setIsEditSubGroupsModalVisible(true)} />
+                                </Col>
+                            </Row>
                         </div>
                     ) : (
-                        <div className="learning-groups__empty-state">
-                            <p className="learning-groups__empty-text">
-                                Select a group to view details
-                            </p>
-                        </div>
+                        <Card>
+                            <p>Select a group to view details</p>
+                        </Card>
                     )}
-                </div>
-            </div>
+                </Col>
+            </Row>
+            <CreateGroupModal
+                visible={isGroupModalVisible}
+                onCreate={handleCreateGroup}
+                onCancel={() => setIsGroupModalVisible(false)}
+            />
+            {selectedGroup && (
+                <EditStudentsModal
+                    visible={isEditStudentsModalVisible}
+                    groupStudents={selectedGroup.students}
+                    availableStudents={getAvailableStudents()}
+                    onAddStudent={handleAddStudent}
+                    onRemoveStudent={handleRemoveStudent}
+                    onCancel={() => setIsEditStudentsModalVisible(false)}
+                />
+            )}
+            {selectedGroup && (
+                <EditSubGroupsModal
+                    visible={isEditSubGroupsModalVisible}
+                    initialSubGroups={selectedGroup.subGroups}
+                    groupStudents={selectedGroup.students}
+                    onSubmit={handleUpdateSubGroups}
+                    onCancel={() => setIsEditSubGroupsModalVisible(false)}
+                />
+            )}
+            {selectedGroup && (
+                <EditGroupModal
+                    visible={isEditGroupModalVisible}
+                    group={selectedGroup}
+                    onUpdate={handleUpdateGroup}
+                    onCancel={() => setIsEditGroupModalVisible(false)}
+                />
+            )}
         </div>
     );
 };

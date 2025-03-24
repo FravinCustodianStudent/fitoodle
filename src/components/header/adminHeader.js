@@ -24,7 +24,6 @@ const AdminHeader = () =>{
             GET(null,"authresource/auth/login")
                 .then((res)=>{
                     console.log(res)
-                    localStorage.setItem("jwt",res.headers.authorization);
                     dispatch(setUser(res.data))
                 })
                 .catch((err)=>{
@@ -37,7 +36,7 @@ const AdminHeader = () =>{
     },[user]);
     const renderElement = () =>{
         return <>
-            <div className="header__avatar"><img src={user.profileIconUrl} alt="user avatar"/> </div>
+            <div className="header__avatar"><img src={user.imageUrl} alt="user avatar"/> </div>
             <nav className="header__nav">
                 <NavLink to={"/admin"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={homeSrc} className="svg" /></a></NavLink>
                 <NavLink to={"/courses"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={courseSrc} className="svg" /></a></NavLink>
