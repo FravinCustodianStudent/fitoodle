@@ -25,6 +25,7 @@ import TestResult from "../admin/testPanel/testResult/testResult";
 import LearningGroups from "../admin/learningGroups/LearningGroups";
 import LessonSchedule from "../admin/schedule/LessonSchedule";
 import Dashboard from "../admin/dashboard/dashboard";
+import CourseManager from "../admin/courses/courseManager";
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
     { path: "/", Component: Layout,
@@ -96,9 +97,10 @@ const router = createBrowserRouter([
             element: <TestResult/>
         },
         {
-            path: '/admin/courses',
-            element: <CoursesMain/>
+            path:'/admin/courses',
+            element: <CourseManager/>
         },
+
         {
             path: '/admin/tasks',
             element: <TasksAdmin/>

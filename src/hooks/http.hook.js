@@ -52,13 +52,10 @@ export const useHttp = () =>{
             // }
             // setProcess('loading');
             return customAxios.put(baseUrl+route,{
-                withCredentials: true,
+                ...body
+            },{ withCredentials: true,
                 params: {...params},
-                headers: {...headers},
-                data:{
-                    ...body
-                }
-            });
+                headers: {...headers},});
         },
         []);
     const DELETE = useCallback(async (params,route,headers)=>{

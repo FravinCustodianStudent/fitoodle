@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Button,
     Input,
@@ -15,23 +15,14 @@ import {
     Select,
 } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import {useHttp} from "../../../hooks/http.hook";
+import { useHttp } from "../../../hooks/http.hook";
+import {useNavigate} from "react-router-dom";
 
 const { Option } = Select;
 
 /**
  * CreateGroupModal Component
- * A modal form to create a new group.
- * It includes fields for:
- * - enterYear (number)
- * - specNameShort (text)
- * - groupNumber (number)
- * - sub-groups (with a minimum of one sub-group)
- *
- * The form is wrapped in a Form.Provider.
- * The submit button is a native <Button htmlType="submit" /> within the form.
  */
-// CreateGroupModal collects group data from the user.
 const CreateGroupModal = ({ visible, onCreate, onCancel, loading }) => {
     const [form] = Form.useForm();
 
@@ -44,7 +35,7 @@ const CreateGroupModal = ({ visible, onCreate, onCancel, loading }) => {
         <Modal
             visible={visible}
             title="Create a New Group"
-            footer={null} // Submit button is inside the form.
+            footer={null}
             onCancel={() => {
                 form.resetFields();
                 onCancel();
@@ -57,7 +48,6 @@ const CreateGroupModal = ({ visible, onCreate, onCancel, loading }) => {
                 name="create_group_form"
                 initialValues={{
                     active: true,
-                    // Initialize with one empty subgroup
                     subGroups: [{}],
                 }}
             >
@@ -85,7 +75,6 @@ const CreateGroupModal = ({ visible, onCreate, onCancel, loading }) => {
                 <Form.Item name="active" label="Active" valuePropName="checked">
                     <Input type="checkbox" />
                 </Form.Item>
-                {/* Subgroup logic */}
                 <Form.List name="subGroups">
                     {(fields, { add, remove }) => (
                         <>
@@ -126,14 +115,26 @@ const CreateGroupModal = ({ visible, onCreate, onCancel, loading }) => {
 
 /**
  * EditStudentsModal Component
- * A modal for editing students in a group.
- * Left side: List of current group students with a remove button (with confirmation).
- * Right side: A search input and list of available students (from a simulated DB) with an Add button.
  */
 const EditStudentsModal = ({ visible, groupStudents, availableStudents, onAddStudent, onRemoveStudent, onCancel }) => {
+    const { GET } = useHttp();
     const [searchTerm, setSearchTerm] = useState('');
+    const [fetchedStudents, setFetchedStudents] = useState([]);
 
-    const filteredAvailableStudents = availableStudents.filter((student) => {
+    useEffect(() => {
+        if (visible) {
+            GET({}, "userdataresource/users", {})
+                .then((res) => {
+                    setFetchedStudents(res.data);
+                })
+                .catch((error) => {
+                    console.error("Error fetching available students", error);
+                    message.error("Error fetching available students");
+                });
+        }
+    }, [visible]);
+
+    const filteredAvailableStudents = fetchedStudents.filter((student) => {
         const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
         return (
             fullName.includes(searchTerm.toLowerCase()) ||
@@ -205,7 +206,6 @@ const EditStudentsModal = ({ visible, groupStudents, availableStudents, onAddStu
 
 /**
  * ModalConfirmRemoveStudent Component
- * Wraps a Remove button in a confirmation popup.
  */
 const ModalConfirmRemoveStudent = ({ student, onConfirm }) => (
     <div>
@@ -224,22 +224,39 @@ const ModalConfirmRemoveStudent = ({ student, onConfirm }) => (
 
 /**
  * EditSubGroupsModal Component
- * A modal for editing sub groups of a selected group.
- * For each sub group, you can set a sub group number and assign students (from the group's student list).
- * You can add new sub groups and delete existing ones (if more than one exists).
  */
-const EditSubGroupsModal = ({ visible, initialSubGroups, groupStudents, onSubmit, onCancel }) => {
+const EditSubGroupsModal = ({ visible, initialSubGroups, groupStudents, selectedGroup, onSubmit, onCancel }) => {
+    const { PUT } = useHttp();
     const [form] = Form.useForm();
 
-    // Options for the multi-select come from the group's students.
     const options = groupStudents.map((student) => ({
         value: student.id,
         label: `${student.firstName} ${student.lastName}`,
     }));
 
+    useEffect(() => {
+        if (visible && (!groupStudents || groupStudents.length === 0)) {
+            message.warning("No students are linked to this group. Please add students first.");
+        }
+    }, [visible, groupStudents]);
+
     const handleFinish = (values) => {
-        onSubmit(values.subGroups);
-        form.resetFields();
+        if (!selectedGroup) return;
+        const updatedGroup = {
+            ...selectedGroup,
+            subGroups: values.subGroups,
+        };
+
+        PUT({}, "userdataresource/groups", {}, { ...updatedGroup })
+            .then((response) => {
+                onSubmit(values.subGroups);
+                form.resetFields();
+                message.success("Sub Groups updated.");
+            })
+            .catch((error) => {
+                console.error("Error updating sub groups:", error);
+                message.error("Failed to update sub groups.");
+            });
     };
 
     return (
@@ -253,7 +270,13 @@ const EditSubGroupsModal = ({ visible, initialSubGroups, groupStudents, onSubmit
             footer={null}
             width={800}
         >
-            <Form form={form} layout="vertical" name="edit_subgroups_form" initialValues={{ subGroups: initialSubGroups }}>
+            <Form
+                form={form}
+                layout="vertical"
+                name="edit_subgroups_form"
+                initialValues={{ subGroups: initialSubGroups }}
+                onFinish={handleFinish}
+            >
                 <Form.List name="subGroups">
                     {(fields, { add, remove }) => (
                         <>
@@ -299,7 +322,7 @@ const EditSubGroupsModal = ({ visible, initialSubGroups, groupStudents, onSubmit
                     )}
                 </Form.List>
                 <Form.Item>
-                    <Button type="primary" htmlType="submit" onClick={() => form.submit()} block>
+                    <Button type="primary" htmlType="submit" block>
                         Save Changes
                     </Button>
                 </Form.Item>
@@ -310,15 +333,29 @@ const EditSubGroupsModal = ({ visible, initialSubGroups, groupStudents, onSubmit
 
 /**
  * EditGroupModal Component
- * A modal for editing the selected group's details.
- * You can change the group's name and its active status.
  */
 const EditGroupModal = ({ visible, group, onUpdate, onCancel }) => {
+    const { PUT } = useHttp();
     const [form] = Form.useForm();
 
     const handleFinish = (values) => {
-        onUpdate(values);
-        form.resetFields();
+        if (!group) return;
+        const updatedGroup = {
+            ...group,
+            specNameShort: values.specNameShort,
+            active: values.active,
+        };
+
+        PUT({}, "userdataresource/groups", {}, { ...updatedGroup })
+            .then((response) => {
+                onUpdate(updatedGroup);
+                form.resetFields();
+                message.success("Group updated.");
+            })
+            .catch((error) => {
+                console.error("Error updating group:", error);
+                message.error("Failed to update group.");
+            });
     };
 
     return (
@@ -359,8 +396,6 @@ const EditGroupModal = ({ visible, group, onUpdate, onCancel }) => {
 
 /**
  * StudentList Component
- * Displays a list of students for a selected group.
- * Includes an "Edit Students" button near the header.
  */
 const StudentList = ({ students, onEdit }) => (
     <div>
@@ -399,8 +434,6 @@ const StudentList = ({ students, onEdit }) => (
 
 /**
  * SubGroupList Component
- * Displays a list of sub groups for a selected group.
- * Includes an "Edit Sub Groups" button near the header.
  */
 const SubGroupList = ({ subGroups, onEdit }) => (
     <div>
@@ -431,52 +464,82 @@ const SubGroupList = ({ subGroups, onEdit }) => (
 );
 
 /**
+ * CourseList Component
+ * Displays a list of courses linked to the group with a "Create Course" button.
+ */
+const CourseList = ({ courses, onCreate }) => (
+    <div style={{ marginTop: 16 }}>
+        <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
+            <Col>
+                <h3>Courses</h3>
+            </Col>
+            <Col>
+                <Button type="primary" onClick={onCreate}>
+                    Create Course
+                </Button>
+            </Col>
+        </Row>
+        <List
+            dataSource={courses}
+            renderItem={(course) => (
+                <List.Item>
+                    <Card style={{ width: '100%' }}>
+                        <Card.Meta
+                            title={course.title}
+                            description={course.description}
+                        />
+                    </Card>
+                </List.Item>
+            )}
+        />
+    </div>
+);
+
+/**
  * LearningGroups Component
- * Main component that displays a list of groups.
- * When a group is selected, its details are shown with separate lists for students and sub groups.
- * Edit buttons are provided for Group, Students, and Sub Groups.
- * Additional modals allow editing of group details, students, and sub groups.
+ * Main component that displays a list of groups and their details.
+ * When a group is selected, its details are shown along with lists for Students,
+ * Sub Groups, and Courses.
  */
 const LearningGroups = () => {
-    const { POST } = useHttp(); // Use your custom HTTP hook's POST method.
+    const { POST, GET, PUT } = useHttp();
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [groups, setGroups] = useState([
-        {
-            id: 'f383664c-zz7e-4d9d-ad2d-f1e4964a9e3a',
-            enterYear: 2025,
-            specNameShort: 'ІПЗ',
-            groupNumber: 10,
-            students: [
-                {
-                    id: 'f383664c-937e-4d9d-ad2d-f1e4964a9e3a',
-                    firstName: 'Maksym',
-                    lastName: 'Shevchuk',
-                    patronomic: 'Yuriyovych',
-                    contactEmail: 'www.max_shevchuk@knu.ua',
-                    imageUrl:
-                        'https://static.wikia.nocookie.net/boowser/images/5/5d/Morshu.jpg/revision/latest?cb=20210207011259',
-                    roles: ['GUEST'],
-                    active: true,
-                },
-            ],
-            subGroups: [
-                {
-                    id: 'sub1',
-                    subGroupNumber: 1,
-                    students: ['f383664c-937e-4d9d-ad2d-f1e4964a9e3a'],
-                },
-            ],
-            active: true,
-        },
-    ]);
+
+    useEffect(() => {
+        getGroupList();
+    }, []);
+
+    const [groups, setGroups] = useState([]);
+    const getGroupList = () => {
+        return GET({}, "userdataresource/groups", {})
+            .then((res) => {
+                // Ensure groups have default arrays.
+                const data = res.data.map((group) => ({
+                    ...group,
+                    tasks: group.tasks || [],
+                    tests: group.tests || [],
+                    courses: group.courses || [],
+                }));
+                setGroups(data);
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    };
+
+    useEffect(() => {
+        console.log('Groups have been updated:', groups);
+    }, [groups]);
+
     const [loading, setLoading] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState(null);
+    const [groupCourses, setGroupCourses] = useState([]);
     const [isGroupModalVisible, setIsGroupModalVisible] = useState(false);
     const [isEditStudentsModalVisible, setIsEditStudentsModalVisible] = useState(false);
     const [isEditSubGroupsModalVisible, setIsEditSubGroupsModalVisible] = useState(false);
     const [isEditGroupModalVisible, setIsEditGroupModalVisible] = useState(false);
-
-    // Simulated available students in DB.
+    const navigate = useNavigate()
+    // Simulated available students (fallback)
     const dbAvailableStudents = [
         {
             id: 's2',
@@ -510,22 +573,26 @@ const LearningGroups = () => {
         },
     ];
 
-    // Compute available students for addition by filtering out those already in the group.
     const getAvailableStudents = () => {
         if (!selectedGroup) return [];
         const groupStudentIds = new Set(selectedGroup.students.map((s) => s.id));
         return dbAvailableStudents.filter((s) => !groupStudentIds.has(s.id));
     };
+
     const handleCreateGroup = (groupData) => {
         setLoading(true);
-
         POST({}, 'userdataresource/groups', {}, groupData)
             .then((response) => {
-                // Use the returned group from the backend
-                const newGroup = response.data;
-                setGroups([...groups, newGroup]);
-                message.success(`Group "${newGroup.specNameShort}" created successfully!`);
-                setIsModalVisible(false);
+                GET({}, "userdataresource/groups", {})
+                    .then((res) => {
+                        setGroups(res.data);
+                        const newGroup = response.data;
+                        message.success(`Group "${newGroup.specNameShort}" created successfully!`);
+                        setIsModalVisible(false);
+                    })
+                    .catch((err) => {
+                        console.log(err);
+                    });
             })
             .catch((error) => {
                 console.error('Error creating group:', error);
@@ -536,8 +603,6 @@ const LearningGroups = () => {
             });
     };
 
-
-    // Handlers for editing group details.
     const handleEditGroup = () => {
         setIsEditGroupModalVisible(true);
     };
@@ -549,13 +614,19 @@ const LearningGroups = () => {
             specNameShort: updatedValues.specNameShort,
             active: updatedValues.active,
         };
-        setSelectedGroup(updatedGroup);
-        setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
-        message.success('Group updated.');
-        setIsEditGroupModalVisible(false);
+        PUT({}, "userdataresource/groups", {}, { ...updatedGroup })
+            .then((response) => {
+                setSelectedGroup(updatedGroup);
+                setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
+                message.success('Group updated.');
+                setIsEditGroupModalVisible(false);
+            })
+            .catch((error) => {
+                console.error("Error updating group:", error);
+                message.error("Failed to update group.");
+            });
     };
 
-    // Handlers for editing students.
     const handleAddStudent = (student) => {
         if (!selectedGroup) return;
         if (selectedGroup.students.find((s) => s.id === student.id)) {
@@ -566,9 +637,17 @@ const LearningGroups = () => {
             ...selectedGroup,
             students: [...selectedGroup.students, student],
         };
-        setSelectedGroup(updatedGroup);
-        setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
-        message.success(`${student.firstName} added.`);
+
+        PUT({}, "userdataresource/groups", {}, { ...updatedGroup })
+            .then((response) => {
+                setSelectedGroup(updatedGroup);
+                setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
+                message.success(`${student.firstName} added.`);
+            })
+            .catch((error) => {
+                console.error("Error updating group:", error);
+                message.error("Failed to add student.");
+            });
     };
 
     const handleRemoveStudent = (student) => {
@@ -577,23 +656,57 @@ const LearningGroups = () => {
             ...selectedGroup,
             students: selectedGroup.students.filter((s) => s.id !== student.id),
         };
-        setSelectedGroup(updatedGroup);
-        setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
-        message.success(`${student.firstName} removed.`);
+        PUT({}, "userdataresource/groups", {}, { ...updatedGroup })
+            .then((response) => {
+                setSelectedGroup(updatedGroup);
+                setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
+                message.success(`${student.firstName} removed.`);
+            })
+            .catch((error) => {
+                console.error("Error updating group:", error);
+                message.error("Failed to remove student.");
+            });
     };
 
-    // Handler for updating sub groups.
     const handleUpdateSubGroups = (newSubGroups) => {
         if (!selectedGroup) return;
         const updatedGroup = {
             ...selectedGroup,
             subGroups: newSubGroups,
         };
-        setSelectedGroup(updatedGroup);
-        setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
-        message.success('Sub Groups updated.');
-        setIsEditSubGroupsModalVisible(false);
+        PUT({}, "userdataresource/groups", {}, { ...updatedGroup })
+            .then((response) => {
+                setSelectedGroup(updatedGroup);
+                setGroups(groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g)));
+                message.success('Sub Groups updated.');
+                setIsEditSubGroupsModalVisible(false);
+            })
+            .catch((error) => {
+                console.error("Error updating sub groups:", error);
+                message.error("Failed to update sub groups.");
+            });
     };
+
+    // Dummy handler for creating a course.
+    const handleCreateCourse = () => {
+        navigate("/admin/courses");
+    };
+
+    // Fetch courses for the selected group when it changes.
+    useEffect(() => {
+        if (selectedGroup) {
+            GET({ groupId: selectedGroup.id }, "/courses/by/group", {})
+                .then((res) => {
+                    setGroupCourses(res.data);
+                })
+                .catch((error) => {
+                    console.error("Error fetching courses for group:", error);
+                    message.error("Failed to fetch courses.");
+                });
+        } else {
+            setGroupCourses([]);
+        }
+    }, [selectedGroup, GET]);
 
     const renderGroupList = () => (
         <List
@@ -649,12 +762,20 @@ const LearningGroups = () => {
                             </Card>
                             <Row gutter={16}>
                                 <Col xs={24} md={12}>
-                                    <StudentList students={selectedGroup.students} onEdit={() => setIsEditStudentsModalVisible(true)} />
+                                    <StudentList
+                                        students={selectedGroup.students}
+                                        onEdit={() => setIsEditStudentsModalVisible(true)}
+                                    />
                                 </Col>
                                 <Col xs={24} md={12}>
-                                    <SubGroupList subGroups={selectedGroup.subGroups} onEdit={() => setIsEditSubGroupsModalVisible(true)} />
+                                    <SubGroupList
+                                        subGroups={selectedGroup.subGroups}
+                                        onEdit={() => setIsEditSubGroupsModalVisible(true)}
+                                    />
                                 </Col>
                             </Row>
+                            {/* Course List Section */}
+                            <CourseList courses={groupCourses} onCreate={handleCreateCourse} />
                         </div>
                     ) : (
                         <Card>
@@ -667,6 +788,7 @@ const LearningGroups = () => {
                 visible={isGroupModalVisible}
                 onCreate={handleCreateGroup}
                 onCancel={() => setIsGroupModalVisible(false)}
+                loading={loading}
             />
             {selectedGroup && (
                 <EditStudentsModal
@@ -684,6 +806,7 @@ const LearningGroups = () => {
                     initialSubGroups={selectedGroup.subGroups}
                     groupStudents={selectedGroup.students}
                     onSubmit={handleUpdateSubGroups}
+                    selectedGroup={selectedGroup}
                     onCancel={() => setIsEditSubGroupsModalVisible(false)}
                 />
             )}
