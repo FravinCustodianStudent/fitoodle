@@ -695,7 +695,7 @@ const LearningGroups = () => {
     // Fetch courses for the selected group when it changes.
     useEffect(() => {
         if (selectedGroup) {
-            GET({ groupId: selectedGroup.id }, "/courses/by/group", {})
+            GET({ groupId: selectedGroup.id }, "courses/by/group", {})
                 .then((res) => {
                     setGroupCourses(res.data);
                 })

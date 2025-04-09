@@ -31,6 +31,7 @@ const Main = withErrorBoundary(() => {
                 .then((res)=>{
                     GET({groupId:res.data.id},"courseresource/courses/by/group",{})
                         .then((result)=>{
+                            if(result.data.length!==0){
                                 GET({eduCourseId:result.data[0].id},"taskresource/tasks/by/course",{})
                                     .then((spacite)=>{
                                         console.log(spacite)
@@ -47,6 +48,11 @@ const Main = withErrorBoundary(() => {
                                         }
 
                                     })
+                            }else {
+                                setTasks([]);
+                                setLoading(false);
+                            }
+
 
                         })
                 }).catch(err=>{

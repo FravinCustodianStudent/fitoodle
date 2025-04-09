@@ -16,6 +16,30 @@
   box-shadow: 0 0 0 1x rgba(217, 4, 41, 0.2) !important;
 }
 
+.custom-steps .ant-steps-item-process .ant-steps-item-icon {
+  background-color: #D90429 !important;
+  border-color: #D90429  !important;
+}
+.custom-steps .ant-steps-item-finish .ant-steps-item-icon {
+  background-color: #2B2D42 !important;
+  border-color: #2B2D42 !important;
+  svg{
+    fill: white !important;
+  }
+}
+
+.ant-steps-item-finish{
+  .ant-steps-item-title{
+    &::after{
+      background-color: #2B2D42 !important;
+    }
+  }
+}
+
+.custom-steps .ant-steps-item-title {
+  color: #2B2D42;
+}
+
 /* 2. Кнопки "outlined" при ховере:
    - меняем цвет рамки и текста на #D90429 */
 .ant-btn.css-dev-only-do-not-override-tjsggz.ant-btn-default.ant-btn-color-default.ant-btn-variant-outlined:hover {
