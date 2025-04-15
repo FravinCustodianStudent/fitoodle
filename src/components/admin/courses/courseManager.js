@@ -30,11 +30,11 @@ import {
     SmileOutlined,
 } from '@ant-design/icons';
 import { useHttp } from '../../../hooks/http.hook';
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 const { Sider, Content } = Layout;
 const { TabPane } = Tabs;
-const ManageGroupsModal = ({ visible, initialSelectedIds, onClose, onUpdate }) => {
-    const { GET } = useHttp();
+const ManageGroupsModal = ({ visible, initialSelectedIds,selectedCourse, onClose, onUpdate }) => {
+    const { GET,PUT } = useHttp();
     const [allGroups, setAllGroups] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedIds, setSelectedIds] = useState(initialSelectedIds || []);
@@ -71,9 +71,18 @@ const ManageGroupsModal = ({ visible, initialSelectedIds, onClose, onUpdate }) =
     };
 
     const handleSave = () => {
-        // console.log(selectedIds);
-        onUpdate(selectedIds);
-        onClose();
+        const updatedCourse = {
+            ...selectedCourse,
+            targetGroups: selectedIds
+        };
+
+        PUT({}, 'courseresource/courses', {}, updatedCourse)
+            .then(() => {
+                message.success('Groups updated successfully');
+                onUpdate(selectedIds); // оновити стан батьківського компонента
+                onClose();
+            })
+            .catch(() => message.error('Failed to update course with new groups'));
     };
 
     return (
@@ -468,12 +477,14 @@ const CourseManagerPage = () => {
     const [selectedCourse, setSelectedCourse] = useState(null);
     const [createCourseDrawerVisible, setCreateCourseDrawerVisible] = useState(false);
     const [manageGroupsModalVisible, setManageGroupsModalVisible] = useState(false);
-
+    const [searchParams,setSearchParams] = useSearchParams();
     // Fetch courses from the server with filters
     const fetchCourses = (filters) => {
         setLoadingCourses(true);
         GET({}, 'courseresource/courses/all', filters)
-            .then((res) => setAvailableCourses(res.data))
+            .then((res) => {setAvailableCourses(res.data)
+            if (searchParams.get('courseId')) setSelectedCourse(res.data.find(a=>a.id === searchParams.get('courseId')));
+            })
             .catch(() => message.error('Failed to fetch courses'))
             .finally(() => setLoadingCourses(false));
     };
@@ -537,7 +548,6 @@ const CourseManagerPage = () => {
             </Form.Item>
         </Form>
     );
-
     // Render courses list in left sidebar
     const renderCourseList = () => (
         <List
@@ -545,7 +555,11 @@ const CourseManagerPage = () => {
             dataSource={availableCourses}
             renderItem={(course) => (
                 <List.Item
-                    onClick={() => setSelectedCourse(course)}
+                    onClick={() => {
+                        setSelectedCourse(course)
+                        console.log(course.id)
+                        setSearchParams({'courseId':course.id})
+                    } }
                     style={{
                         cursor: 'pointer',
                         padding: 12,
@@ -769,6 +783,7 @@ const CourseManagerPage = () => {
                 <ManageGroupsModal
                     visible={manageGroupsModalVisible}
                     initialSelectedIds={selectedCourse.targetGroups || []}
+                    selectedCourse={selectedCourse}
                     onClose={() => setManageGroupsModalVisible(false)}
                     onUpdate={handleUpdateCourseGroups}
                 />

@@ -18,7 +18,6 @@ import AdminMain from "../admin/adminMain/adminMain";
 import AdminGroups from "../admin/groups/adminGroups";
 import CoursesMain from "../admin/courses/coursesMain";
 import TasksAdmin from "../admin/tasks/tasksAdmin";
-import QuestionGroupAdmin from "../admin/tests/questionGroupAdmin";
 import QuestionsAdmin from "../admin/tests/questionsAdmin";
 import TestConfig from "../admin/tests/testConfig";
 import TestResult from "../admin/testPanel/testResult/testResult";
@@ -26,6 +25,7 @@ import LearningGroups from "../admin/learningGroups/LearningGroups";
 import LessonSchedule from "../admin/schedule/LessonSchedule";
 import Dashboard from "../admin/dashboard/dashboard";
 import CourseManager from "../admin/courses/courseManager";
+import {ConfigProvider} from "antd";
 // 3️⃣ Router singleton created
 const router = createBrowserRouter([
     { path: "/", Component: Layout,
@@ -106,10 +106,6 @@ const router = createBrowserRouter([
             element: <TasksAdmin/>
         },
         {
-            path: '/admin/questiongroup',
-            element: <QuestionGroupAdmin/>
-        },
-        {
             path: '/admin/questions',
             element: <QuestionsAdmin/>
         },
@@ -123,9 +119,27 @@ const router = createBrowserRouter([
         }
     ]}
 ]);
+const themeConfig = {
+    token: {
+        colorPrimary: '#2B2D42',
+        colorPrimaryHover: '#D90429', // a lighter or richer version for hover
+        colorPrimaryActive: '#1F2235', // pressed state
+        colorError: '#D90429',
+        colorErrorHover: '#F33445', // slightly brighter red
+        colorLink: '#2B2D42',
+        colorLinkHover: '#D90429',
+        colorBgTextHover: '#F5F5F5', // text-button hover bg,
+        boxShadow: '0 2px 4px rgba(4, 8, 19, 0.53)', // ваш кастомний тінь
+        boxShadowSecondary: '0 2px 4px rgba(4, 8, 19, 0.53)'
+    },
+};
 function App() {
+
   return (
-      <RouterProvider router={router}/>
+      <ConfigProvider  theme={themeConfig}>
+          <RouterProvider router={router}/>
+      </ConfigProvider>
+
       // <Router>
       // <div className="App">
       //     <Routes>

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Card, Col, Row, Typography, Button, Divider, Space, Tag, theme } from 'antd';
+import { motion } from 'framer-motion';
 import {
     Users,
     BookOpen,
@@ -11,9 +13,12 @@ import {
     ListTodo
 } from 'lucide-react';
 import { format, addDays } from 'date-fns';
-import './dashboard.scss';
+
+const { Title, Text } = Typography;
 
 const Dashboard = () => {
+    const { token } = theme.useToken();
+
     const stats = {
         totalStudents: 245,
         activeTests: 12,
@@ -51,7 +56,6 @@ const Dashboard = () => {
             type: 'test',
             date: format(addDays(new Date(), 2), 'MMM dd, yyyy'),
             group: 'Web Development Basics',
-            status: 'upcoming',
         },
         {
             id: '2',
@@ -59,7 +63,6 @@ const Dashboard = () => {
             type: 'lecture',
             date: format(addDays(new Date(), 1), 'MMM dd, yyyy'),
             group: 'Web Development Basics',
-            status: 'upcoming',
         },
         {
             id: '3',
@@ -67,137 +70,118 @@ const Dashboard = () => {
             type: 'task',
             date: format(addDays(new Date(), 4), 'MMM dd, yyyy'),
             group: 'Advanced Programming',
-            status: 'upcoming',
         },
     ];
 
-    const performanceData = [
-        { month: 'Jan', averageScore: 75, completionRate: 85 },
-        { month: 'Feb', averageScore: 78, completionRate: 82 },
-        { month: 'Mar', averageScore: 82, completionRate: 88 },
-        { month: 'Apr', averageScore: 80, completionRate: 85 },
-        { month: 'May', averageScore: 85, completionRate: 90 },
-    ];
+    const getEventIcon = (type) => {
+        switch (type) {
+            case 'test': return <ClipboardCheck />;
+            case 'lecture': return <GraduationCap />;
+            case 'task': return <ListTodo />;
+            default: return <ListTodo />;
+        }
+    };
 
-    // QuickNavButton as a reusable component.
     const QuickNavButton = ({ to, icon: Icon, label }) => (
-        <Link to={to} className="dashboard__quicknav-button">
-            <div className="dashboard__quicknav-button__left">
-                <Icon className="dashboard__quicknav-icon" />
-                <span className="dashboard__quicknav-label">{label}</span>
-            </div>
-            <ArrowRight className="dashboard__quicknav-arrow" />
-        </Link>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} style={{ width: '100%', marginTop: 15 }}>
+            <Link to={to}>
+                <Card
+                    hoverable
+                    bordered
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        width: '100%',
+                        background: token.colorBgContainer,
+                    }}
+                >
+                    <Space>
+                        <Icon color={token.colorPrimary} />
+                        <Text style={{ color: token.colorLink }}>{label}</Text>
+                    </Space>
+                    <ArrowRight color={token.colorPrimary} />
+                </Card>
+            </Link>
+        </motion.div>
     );
 
     return (
-        <div className="dashboard">
-            <header className="dashboard__header">
-                <h1 className="dashboard__title">Dashboard</h1>
-                <div className="dashboard__date">{format(new Date(), 'MMMM dd, yyyy')}</div>
-            </header>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ width: '100%' }}>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 32 }}>
+                <Title level={2}>Dashboard</Title>
+                <Text>{format(new Date(), 'MMMM dd, yyyy')}</Text>
+            </Row>
 
-            {/* Quick Navigation Links */}
-            <div className="dashboard__quicknav">
-                <QuickNavButton to="/schedule" icon={Calendar} label="Schedule" />
-                <QuickNavButton to="/groups" icon={Users} label="Groups" />
-                <QuickNavButton to="/tests" icon={ClipboardCheck} label="Tests" />
-                <QuickNavButton to="/results" icon={BarChart2} label="Results" />
-            </div>
+            <Row gutter={[16, 16]} style={{ marginBottom: 32 }}>
+                <Col xs={24} sm={12} md={6}><QuickNavButton to="/schedule" icon={Calendar} label="Schedule" /></Col>
+                <Col xs={24} sm={12} md={6}><QuickNavButton to="/groups" icon={Users} label="Groups" /></Col>
+                <Col xs={24} sm={12} md={6}><QuickNavButton to="/tests" icon={ClipboardCheck} label="Tests" /></Col>
+                <Col xs={24} sm={12} md={6}><QuickNavButton to="/results" icon={BarChart2} label="Results" /></Col>
+            </Row>
 
-            {/* Overview Stats */}
-            <div className="dashboard__stats">
-                <div className="dashboard__stat-card">
-                    <div className="dashboard__stat-icon-wrapper dashboard__stat-icon-wrapper--blue">
-                        <Users className="dashboard__stat-icon" />
-                    </div>
-                    <div className="dashboard__stat-info">
-                        <h2 className="dashboard__stat-label">Total Students</h2>
-                        <p className="dashboard__stat-value">{stats.totalStudents}</p>
-                    </div>
-                </div>
-                <div className="dashboard__stat-card">
-                    <div className="dashboard__stat-icon-wrapper dashboard__stat-icon-wrapper--green">
-                        <BookOpen className="dashboard__stat-icon" />
-                    </div>
-                    <div className="dashboard__stat-info">
-                        <h2 className="dashboard__stat-label">Active Tests</h2>
-                        <p className="dashboard__stat-value">{stats.activeTests}</p>
-                    </div>
-                </div>
-                <div className="dashboard__stat-card">
-                    <div className="dashboard__stat-icon-wrapper dashboard__stat-icon-wrapper--purple">
-                        <Calendar className="dashboard__stat-icon" />
-                    </div>
-                    <div className="dashboard__stat-info">
-                        <h2 className="dashboard__stat-label">Upcoming Lessons</h2>
-                        <p className="dashboard__stat-value">{stats.upcomingLessons}</p>
-                    </div>
-                </div>
-            </div>
+            <Row gutter={[16, 16]} style={{ marginBottom: 32 }}>
+                {[{
+                    icon: <Users color={token.colorPrimary} />, label: 'Total Students', value: stats.totalStudents
+                }, {
+                    icon: <BookOpen color={token.colorPrimary} />, label: 'Active Tests', value: stats.activeTests
+                }, {
+                    icon: <Calendar color={token.colorPrimary} />, label: 'Upcoming Lessons', value: stats.upcomingLessons
+                }].map((stat, index) => (
+                    <Col span={8} key={index}>
+                        <Card bordered>
+                            <Space direction="vertical">
+                                <div>{stat.icon}</div>
+                                <Title level={4}>{stat.label}</Title>
+                                <Text>{stat.value}</Text>
+                            </Space>
+                        </Card>
+                    </Col>
+                ))}
+            </Row>
 
-            <div className="dashboard__modules">
-                {/* Active Groups Module */}
-                <div className="dashboard__module">
-                    <div className="dashboard__module-header">
-                        <h2 className="dashboard__module-title">Active Groups</h2>
-                        <Link to="/groups" className="dashboard__module-link">
-                            View all
-                        </Link>
-                    </div>
-                    <div className="dashboard__module-list">
-                        {groups.map((group) => (
-                            <div key={group.id} className="dashboard__module-item">
-                                <div className="dashboard__group-info">
-                                    <h3 className="dashboard__group-name">{group.name}</h3>
-                                    <p className="dashboard__group-activity">{group.recentActivity}</p>
-                                </div>
-                                <div className="dashboard__group-stats">
-                                    <div className="dashboard__group-stat">
-                                        <span className="dashboard__group-stat-label">Students</span>
-                                        <span className="dashboard__group-stat-value">{group.studentsCount}</span>
-                                    </div>
-                                    <div className="dashboard__group-stat">
-                                        <span className="dashboard__group-stat-label">Avg. Score</span>
-                                        <span className="dashboard__group-stat-value">{group.averageScore}%</span>
-                                    </div>
-                                </div>
-                            </div>
+            <Row gutter={16} style={{ marginBottom: 32 }}>
+                <Col span={12}>
+                    <Card
+                        title={<Title level={4} style={{ margin: 0 }}>Active Groups</Title>}
+                        extra={<Link to="/groups" style={{ color: token.colorLink }}>View all</Link>}
+                    >
+                        {groups.map(group => (
+                            <Card key={group.id} type="inner" style={{ marginBottom: 16 }}>
+                                <Title level={5}>{group.name}</Title>
+                                <Text type="secondary">{group.recentActivity}</Text>
+                                <Divider style={{ margin: '12px 0' }} />
+                                <Row gutter={12}>
+                                    <Col><Tag color={token.colorPrimary}>Students: {group.studentsCount}</Tag></Col>
+                                    <Col><Tag color={token.colorPrimary}>Avg. Score: {group.averageScore}%</Tag></Col>
+                                </Row>
+                            </Card>
                         ))}
-                    </div>
-                </div>
+                    </Card>
+                </Col>
 
-                {/* Upcoming Events Module */}
-                <div className="dashboard__module">
-                    <div className="dashboard__module-header">
-                        <h2 className="dashboard__module-title">Upcoming Events</h2>
-                    </div>
-                    <div className="dashboard__module-list">
-                        {events.map((event) => (
-                            <div key={event.id} className="dashboard__module-item">
-                                <div className="dashboard__event-info">
-                                    <div className="dashboard__event-icon">
-                                        {event.type === 'test' ? (
-                                            <ClipboardCheck className="dashboard__icon" />
-                                        ) : event.type === 'lecture' ? (
-                                            <GraduationCap className="dashboard__icon" />
-                                        ) : (
-                                            <ListTodo className="dashboard__icon" />
-                                        )}
-                                    </div>
-                                    <div className="dashboard__event-details">
-                                        <h3 className="dashboard__event-title">{event.title}</h3>
-                                        <p className="dashboard__event-group">{event.group}</p>
-                                    </div>
-                                </div>
-                                <div className="dashboard__event-date">{event.date}</div>
-                            </div>
+                <Col span={12}>
+                    <Card
+                        title={<Title level={4} style={{ margin: 0 }}>Upcoming Events</Title>}
+                    >
+                        {events.map(event => (
+                            <Card key={event.id} type="inner" style={{ marginBottom: 16 }}>
+                                <Row justify="space-between" align="middle">
+                                    <Space>
+                                        {getEventIcon(event.type)}
+                                        <div>
+                                            <Title level={5} style={{ margin: 0 }}>{event.title}</Title>
+                                            <Text type="secondary">{event.group}</Text>
+                                        </div>
+                                    </Space>
+                                    <Tag color={token.colorPrimary}>{event.date}</Tag>
+                                </Row>
+                            </Card>
                         ))}
-                    </div>
-                </div>
-            </div>
-
-        </div>
+                    </Card>
+                </Col>
+            </Row>
+        </motion.div>
     );
 };
 

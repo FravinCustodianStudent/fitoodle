@@ -14,7 +14,7 @@ import {
     Modal,
     Select,
 } from 'antd';
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import {PlusOutlined, SearchOutlined, RightCircleOutlined, UserOutlined} from '@ant-design/icons';
 import { useHttp } from "../../../hooks/http.hook";
 import {useNavigate} from "react-router-dom";
 
@@ -72,8 +72,8 @@ const CreateGroupModal = ({ visible, onCreate, onCancel, loading }) => {
                 >
                     <InputNumber style={{ width: '100%' }} placeholder="e.g., 10" />
                 </Form.Item>
-                <Form.Item name="active" label="Active" valuePropName="checked">
-                    <Input type="checkbox" />
+                <Form.Item name="active"  valuePropName="checked">
+                    <Checkbox>Active</Checkbox>
                 </Form.Item>
                 <Form.List name="subGroups">
                     {(fields, { add, remove }) => (
@@ -185,7 +185,7 @@ const EditStudentsModal = ({ visible, groupStudents, availableStudents, onAddStu
                         renderItem={(student) => (
                             <List.Item
                                 actions={[
-                                    <Button type="link" onClick={() => onAddStudent(student)}>
+                                    <Button disabled={groupStudents.some(st=> st.id===student.id)} variant="outlined" onClick={() => onAddStudent(student)}>
                                         Add
                                     </Button>,
                                 ]}
@@ -209,7 +209,7 @@ const EditStudentsModal = ({ visible, groupStudents, availableStudents, onAddStu
  */
 const ModalConfirmRemoveStudent = ({ student, onConfirm }) => (
     <div>
-        <Button type="link" onClick={() => {
+        <Button variant="dashed" onClick={() => {
             Modal.confirm({
                 title: 'Are you sure you want to remove this student?',
                 onOk: onConfirm,
@@ -404,7 +404,7 @@ const StudentList = ({ students, onEdit }) => (
                 <h3>Students</h3>
             </Col>
             <Col>
-                <Button type="link" onClick={onEdit}>
+                <Button variant="dashed" onClick={onEdit}>
                     Edit Students
                 </Button>
             </Col>
@@ -442,7 +442,7 @@ const SubGroupList = ({ subGroups, onEdit }) => (
                 <h3>Sub Groups</h3>
             </Col>
             <Col>
-                <Button type="link" onClick={onEdit}>
+                <Button variant="outlined" onClick={onEdit}>
                     Edit Sub Groups
                 </Button>
             </Col>
@@ -467,7 +467,7 @@ const SubGroupList = ({ subGroups, onEdit }) => (
  * CourseList Component
  * Displays a list of courses linked to the group with a "Create Course" button.
  */
-const CourseList = ({ courses, onCreate }) => (
+const CourseList = ({ courses, onCreate,navigate }) => (
     <div style={{ marginTop: 16 }}>
         <Row justify="space-between" align="middle" style={{ marginBottom: 8 }}>
             <Col>
@@ -480,14 +480,34 @@ const CourseList = ({ courses, onCreate }) => (
             </Col>
         </Row>
         <List
+            grid={{
+                gutter: 16,
+                xs: 1,
+                sm: 2,
+                md: 4,
+                lg: 4,
+                xl: 6,
+                xxl: 3,
+            }}
             dataSource={courses}
             renderItem={(course) => (
                 <List.Item>
-                    <Card style={{ width: '100%' }}>
+                    <Card
+                    actions={[
+                        <RightCircleOutlined key={course.id} onClick={()=>{
+                            navigate(`/admin/courses?courseId=${course.id}`);
+                        }} />
+                    ]}
+                    >
                         <Card.Meta
-                            title={course.title}
-                            description={course.description}
+                            title={course.name}
+                            description={
+                            <>
+                                <p><UserOutlined /> Teacher : {course.teacherId}</p>
+                            </>
+                            }
                         />
+
                     </Card>
                 </List.Item>
             )}
@@ -504,7 +524,6 @@ const CourseList = ({ courses, onCreate }) => (
 const LearningGroups = () => {
     const { POST, GET, PUT } = useHttp();
     const [isModalVisible, setIsModalVisible] = useState(false);
-
     useEffect(() => {
         getGroupList();
     }, []);
@@ -695,7 +714,7 @@ const LearningGroups = () => {
     // Fetch courses for the selected group when it changes.
     useEffect(() => {
         if (selectedGroup) {
-            GET({ groupId: selectedGroup.id }, "courses/by/group", {})
+            GET({ groupId: selectedGroup.id }, "courseresource/courses/by/group", {})
                 .then((res) => {
                     setGroupCourses(res.data);
                 })
@@ -753,7 +772,7 @@ const LearningGroups = () => {
                         <div>
                             <Card
                                 title={`Group Details: [${selectedGroup.enterYear}] ${selectedGroup.specNameShort} - Group ${selectedGroup.groupNumber}`}
-                                extra={<Button type="link" onClick={handleEditGroup}>Edit Group</Button>}
+                                extra={<Button variant="filled" onClick={handleEditGroup}>Edit Group</Button>}
                                 style={{ marginBottom: 16 }}
                             >
                                 <p>
@@ -775,7 +794,7 @@ const LearningGroups = () => {
                                 </Col>
                             </Row>
                             {/* Course List Section */}
-                            <CourseList courses={groupCourses} onCreate={handleCreateCourse} />
+                            <CourseList courses={groupCourses} navigate={navigate} onCreate={handleCreateCourse} />
                         </div>
                     ) : (
                         <Card>

@@ -12,7 +12,7 @@ const CoursesItemMain = ({item,Course,setCourse}) =>{
         return str;
     }
     const onDelete = (id) =>{
-        DELETE({},`courseresource/courses/${id}`,{"Authorization": localStorage.getItem("jwt")})
+        DELETE({},`courseresource/courses/${id}`)
             .then((res)=>{
                 console.log(res)
                     setCourse(Course.filter(res=>res.id!==id))

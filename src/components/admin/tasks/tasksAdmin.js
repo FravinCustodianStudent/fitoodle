@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Spin } from 'antd';
 import {
     Layout,
     Input,
@@ -38,6 +40,10 @@ import {
 } from '@ant-design/icons';
 import { useHttp } from '../../../hooks/http.hook';
 import { useSelector } from 'react-redux';
+import {DownloadIcon} from "lucide-react";
+import TaskDetailsCard from "./TaskDetailsCard";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {theme} from "antd/lib";
 
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
@@ -78,10 +84,17 @@ const SelectCourseModal = ({ visible, onClose, onSelect, courses }) => {
 
 /** CreateTaskDrawer: Drawer modal to create a new task with drag-and-drop file upload */
 const CreateTaskDrawer = ({ visible, onClose, onCreate, selectedCourse }) => {
-    const { POST, DELETE } = useHttp();
-    const currentUser = useSelector((state) => state.users.user); // Moved to top level
+    const { FilePost, POST, DELETE, GET } = useHttp();
+    const currentUser = useSelector((state) => state.users.user);
+    const [previewingFileId, setPreviewingFileId] = useState(null);
     const [form] = Form.useForm();
     const [uploadedFiles, setUploadedFiles] = useState([]);
+
+    useEffect(() => {
+        if (visible) {
+            form.setFieldsValue({ createdAt: moment() });
+        }
+    }, [visible, form]);
 
     const beforeUpload = (file) => {
         const isLt2M = file.size / 1024 / 1024 < 2;
@@ -92,21 +105,63 @@ const CreateTaskDrawer = ({ visible, onClose, onCreate, selectedCourse }) => {
     };
 
     const customRequest = async ({ file, onSuccess, onError, onProgress }) => {
+        const newFile = {
+            uid: file.uid,
+            name: file.name,
+            status: 'uploading',
+            percent: 0,
+        };
+        setUploadedFiles(prev => [...prev, newFile]);
+
         const formData = new FormData();
         formData.append('file', file);
+
+        // емуляція прогресу (наприклад, 1 секунда = 100%)
+        let percent = 0;
+        const fakeProgress = setInterval(() => {
+            percent += 10;
+            setUploadedFiles(prev =>
+                prev.map(f =>
+                    f.uid === file.uid ? { ...f, percent } : f
+                )
+            );
+            if (percent >= 90) clearInterval(fakeProgress);
+        }, 100);
+
         try {
-            const response = await POST({}, 'fileresource/files', {}, formData);
-            onSuccess(response.data, file);
-        } catch (error) {
-            onError(error);
+            const res = await FilePost('fileresource/files', formData);
+
+            clearInterval(fakeProgress);
+
+            setUploadedFiles(prev =>
+                prev.map(f =>
+                    f.uid === file.uid
+                        ? { ...f, status: 'done', percent: 100, response: res.data }
+                        : f
+                )
+            );
+            onSuccess(res.data, file);
+            message.success(`${file.name} uploaded`);
+        } catch (err) {
+            clearInterval(fakeProgress);
+            setUploadedFiles(prev =>
+                prev.map(f =>
+                    f.uid === file.uid
+                        ? { ...f, status: 'error', percent: 100 }
+                        : f
+                )
+            );
+            onError(err);
+            message.error(`Upload failed: ${file.name}`);
         }
     };
 
+
     const handleRemoveFile = async (file) => {
         try {
-            await DELETE({}, `/files/${file.response.id}`, {});
+            await DELETE({}, `fileresource/files/${file.response.id}`, {});
             setUploadedFiles((prev) => prev.filter((f) => f.uid !== file.uid));
-            message.success('File removed successfully');
+            message.success(`${file.name} removed`);
         } catch (error) {
             console.error('Failed to remove file:', error);
             message.error('Failed to remove file');
@@ -118,7 +173,7 @@ const CreateTaskDrawer = ({ visible, onClose, onCreate, selectedCourse }) => {
         const newTask = {
             id: Date.now().toString(),
             name: values.name,
-            authorId: currentUser.id, // Use currentUser from top-level
+            authorId: currentUser.id,
             eduCourseId: selectedCourse ? selectedCourse.id : '',
             maxMarkValue: values.maxMarkValue,
             createdAt: values.createdAt.format('YYYY-MM-DDTHH:mm:ss'),
@@ -170,7 +225,7 @@ const CreateTaskDrawer = ({ visible, onClose, onCreate, selectedCourse }) => {
                     name="createdAt"
                     rules={[{ required: true, message: 'Please select creation date' }]}
                 >
-                    <DatePicker showTime style={{ width: '100%' }} />
+                    <DatePicker showTime style={{ width: '100%' }} disabled />
                 </Form.Item>
                 <Form.Item
                     label="Deadline"
@@ -186,16 +241,22 @@ const CreateTaskDrawer = ({ visible, onClose, onCreate, selectedCourse }) => {
                 >
                     <Input.TextArea rows={4} placeholder="Enter task description" />
                 </Form.Item>
-                <Form.Item label="Attached Files">
+                <Form.Item label="Upload Files">
                     <Upload.Dragger
                         name="file"
-                        multiple
                         customRequest={customRequest}
-                        beforeUpload={beforeUpload}
-                        onRemove={handleRemoveFile}
                         fileList={uploadedFiles}
-                        onChange={(info) => {
-                            setUploadedFiles(info.fileList);
+                        onRemove={handleRemoveFile}
+                        showUploadList={{
+                            showRemoveIcon: true,
+                            showDownloadIcon: false,
+                            showPreviewIcon: false,
+                        }}
+                        onPreview={async (file) => {
+                            if (file?.response?.id) {
+                                const res = await GET({}, `fileresource/files/${file.response.id}`, {});
+                                window.open(res.data.driveUrl, '_blank');
+                            }
                         }}
                     >
                         <p className="ant-upload-drag-icon">
@@ -204,6 +265,7 @@ const CreateTaskDrawer = ({ visible, onClose, onCreate, selectedCourse }) => {
                         <p className="ant-upload-text">Click or drag file to upload</p>
                         <p className="ant-upload-hint">Max file size 2MB</p>
                     </Upload.Dragger>
+
                 </Form.Item>
                 <Form.Item>
                     <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
@@ -214,6 +276,8 @@ const CreateTaskDrawer = ({ visible, onClose, onCreate, selectedCourse }) => {
         </Drawer>
     );
 };
+
+
 
 /** TaskResultModal Component
  * Opens when a teacher clicks on a task result in the "Task Results" tab.
@@ -311,67 +375,85 @@ const TaskResultModal = ({ visible, onClose, taskResult }) => {
 const TasksAdmin = () => {
     const { GET, POST } = useHttp();
     const user = useSelector((state) => state.users.user);
-
-    // Course selection
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { token } = theme.useToken();
+    const navigate = useNavigate();
     const [selectedCourse, setSelectedCourse] = useState(null);
     const [selectCourseModalVisible, setSelectCourseModalVisible] = useState(false);
     const [courses, setCourses] = useState([]);
+    const [tasks, setTasks] = useState([]);
+    const [selectedTask, setSelectedTask] = useState(null);
+    const [createTaskDrawerVisible, setCreateTaskDrawerVisible] = useState(false);
+    const [filterName, setFilterName] = useState('');
+    const [filterCreationDate, setFilterCreationDate] = useState(null);
+    const [filterDeadline, setFilterDeadline] = useState(null);
+    const [filterForm] = Form.useForm();
+
     useEffect(() => {
         GET({}, 'courseresource/courses/all', {})
-            .then((res) => setCourses(res.data))
+            .then(res => {
+                setCourses(res.data)
+                const courseIdFromParams = searchParams.get('courseId');
+                if (courseIdFromParams) {
+                    const matchedCourse = res.data.find(course => course.id === courseIdFromParams);
+                    if (matchedCourse) {
+                        setSelectedCourse(matchedCourse);
+                    }
+                }
+
+            })
             .catch(() => message.error('Failed to fetch courses'));
     }, [GET]);
 
-    // Tasks state for selected course
-    const [tasks, setTasks] = useState([]);
     useEffect(() => {
         if (selectedCourse) {
             GET({ eduCourseId: selectedCourse.id }, 'taskresource/tasks/by/course', {})
-                .then((res) => setTasks(res.data))
-                .catch(() => message.error('Failed to fetch tasks for selected course'));
+                .then(res => setTasks(res.data))
+                .catch(() => message.error('Failed to fetch tasks'));
         } else {
             setTasks([]);
         }
     }, [selectedCourse, GET]);
 
-    // Task filtering states
-    const [filterName, setFilterName] = useState('');
-    const [filterCreationDate, setFilterCreationDate] = useState(null);
-    const [filterDeadline, setFilterDeadline] = useState(null);
-
     const filteredTasks = tasks.filter((task) => {
-        if (selectedCourse && task.eduCourseId !== selectedCourse.id) {
-            return false;
-        }
-        if (filterName && !task.name.toLowerCase().includes(filterName.toLowerCase())) {
-            return false;
-        }
-        if (
-            filterCreationDate &&
-            moment(task.createdAt).format('YYYY-MM-DD') !== filterCreationDate.format('YYYY-MM-DD')
-        ) {
-            return false;
-        }
-        if (
-            filterDeadline &&
-            moment(task.deadline).format('YYYY-MM-DD') !== filterDeadline.format('YYYY-MM-DD')
-        ) {
-            return false;
-        }
+        if (selectedCourse && task.eduCourseId !== selectedCourse.id) return false;
+        if (filterName && !task.name.toLowerCase().includes(filterName.toLowerCase())) return false;
+        if (filterCreationDate && moment(task.createdAt).format('YYYY-MM-DD') !== filterCreationDate.format('YYYY-MM-DD')) return false;
+        if (filterDeadline && moment(task.deadline).format('YYYY-MM-DD') !== filterDeadline.format('YYYY-MM-DD')) return false;
+        if (task.testId !== null) return false;
         return true;
     });
 
-    // Filter popover for tasks
-    const [filterForm] = Form.useForm();
+    const onTaskSelect = (task) => {
+        setSelectedTask(task);
+    };
+
+    const handleCreateTask = (newTask) => {
+        const payload = {
+            ...newTask,
+            id: Date.now().toString(),
+            authorId: user.id,
+            eduCourseId: selectedCourse.id,
+            testId: null,
+        };
+        setTasks([...tasks, ...payload]);
+
+    };
+
+    const handleUpdateTask = (updatedTask) => {
+        setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+        setSelectedTask(updatedTask);
+    };
+
+    const handleDeleteTask = (taskId) => {
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+        setSelectedTask(null);
+    };
     const filterContent = (
         <Form
             form={filterForm}
             layout="vertical"
-            initialValues={{
-                filterName,
-                filterCreationDate,
-                filterDeadline,
-            }}
+            initialValues={{ filterName, filterCreationDate, filterDeadline }}
             onFinish={(values) => {
                 setFilterName(values.filterName || '');
                 setFilterCreationDate(values.filterCreationDate || null);
@@ -417,319 +499,82 @@ const TasksAdmin = () => {
         </Form>
     );
 
-    // Selected task and task result modal states
-    const [selectedTask, setSelectedTask] = useState(null);
-    const [createTaskDrawerVisible, setCreateTaskDrawerVisible] = useState(false);
-    const [taskResults, setTaskResults] = useState([]);
-    const [selectedTaskResult, setSelectedTaskResult] = useState(null);
-    const [taskResultModalVisible, setTaskResultModalVisible] = useState(false);
-
-    // When selectedTask changes, fetch its task results from API
-    useEffect(() => {
-        if (selectedTask) {
-            GET({ taskId: selectedTask.id }, 'taskresource/taskResult/by/task', {})
-                .then((res) => setTaskResults(res.data))
-                .catch(() => message.error('Failed to fetch task results'));
-        } else {
-            setTaskResults([]);
-        }
-    }, [selectedTask, GET]);
-
-    const onTaskSelect = (task) => {
-        setSelectedTask(task);
-    };
-
-    // Handler for creating a new task via API
-    const handleCreateTask = (newTask) => {
-        newTask.authorId = user.id;
-        newTask.eduCourseId = selectedCourse.id;
-        POST({}, 'taskresource/tasks', {}, newTask)
-            .then((res) => {
-                setTasks([...tasks, res.data]);
-                message.success('Task created successfully');
-            })
-            .catch((error) => {
-                console.error('Failed to create task:', error);
-                message.error('Failed to create task');
-            });
-    };
-
-    // Render task details tabs (Task Details and Task Results)
-    const renderTaskTabs = () => {
-        if (!selectedTask) return null;
-        return (
-            <Tabs defaultActiveKey="details" type="line" style={{ padding: '16px 0' }}>
-                <TabPane tab="Task Details" key="details">
-                    <div style={{ padding: 24 }}>
-                        <div style={{ marginBottom: 16 }}>
-                            <Title level={3}>{selectedTask.name}</Title>
-                        </div>
-                        <Row gutter={16} style={{ marginBottom: 16 }}>
-                            <Col span={12}>
-                                <Text strong>Created:</Text> {selectedTask.createdAt}
-                            </Col>
-                            <Col span={12}>
-                                <Text strong>Deadline:</Text> {selectedTask.deadline}
-                            </Col>
-                        </Row>
-                        <div style={{ marginBottom: 16 }}>
-                            <Text strong>Description:</Text>
-                            <p>{selectedTask.description}</p>
-                        </div>
-                        <Divider>Attached Files</Divider>
-                        <List
-                            dataSource={selectedTask.attachedFiles}
-                            renderItem={(file) => (
-                                <List.Item>
-                                    <a href="#">{file}</a>
-                                </List.Item>
-                            )}
-                        />
-                    </div>
-                </TabPane>
-                <TabPane tab="Task Results" key="results">
-                    <div style={{ padding: 24 }}>
-                        <List
-                            header={<div>Task Results</div>}
-                            dataSource={taskResults}
-                            renderItem={(result) => (
-                                <List.Item
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => {
-                                        setSelectedTaskResult(result);
-                                        setTaskResultModalVisible(true);
-                                    }}
-                                >
-                                    <List.Item.Meta
-                                        title={`Result by Student: ${result.studentId}`}
-                                        description={`Completed: ${result.completed ? 'Yes' : 'No'} - Completion Time: ${result.completionTime}`}
-                                    />
-                                </List.Item>
-                            )}
-                        />
-                    </div>
-                </TabPane>
-            </Tabs>
-        );
-    };
-
-    /** TaskResultModal Component:
-     * Shows details of a selected task result. It fetches student info and mark info.
-     * Teacher can update mark and comment.
-     */
-    const TaskResultModal = ({ visible, onClose, taskResult }) => {
-        const { GET, PUT } = useHttp();
-        const [student, setStudent] = useState(null);
-        const [mark, setMark] = useState(null);
-        const [form] = Form.useForm();
-
-        useEffect(() => {
-            if (visible && taskResult) {
-                // Fetch student details
-                GET({}, `userdataresource/users/${taskResult.studentId}`, {})
-                    .then((res) => setStudent(res.data))
-                    .catch(() => message.error('Failed to fetch student info'));
-
-                // Fetch mark for this task result
-                GET({ taskResultId: taskResult.id }, 'taskresource/marks/by/testResult', {})
-                    .then((res) => setMark(res.data))
-                    .catch(() => setMark(null));
-            }
-        }, [visible, taskResult, GET]);
-
-        const handleMarkUpdate = (values) => {
-            const updatedMark = {
-                id: mark ? mark.id : '',
-                taskResultId: taskResult.id,
-                userId: student ? student.id : '',
-                markValue: values.markValue,
-                comment: values.comment,
-            };
-            PUT({}, `taskresource/marks/${updatedMark.id}`, {}, updatedMark)
-                .then(() => {
-                    message.success('Mark updated successfully');
-                    onClose();
-                })
-                .catch(() => message.error('Failed to update mark'));
-        };
-
-        return (
-            <Modal visible={visible} title="Task Result Details" onCancel={onClose} footer={null}>
-                {student ? (
-                    <div>
-                        <Title level={4}>
-                            {student.firstName} {student.lastName}
-                        </Title>
-                        <Text>{student.contactEmail}</Text>
-                    </div>
-                ) : (
-                    <Text>Loading student information...</Text>
-                )}
-                <Divider />
-                <div>
-                    <Text strong>Completion Time: </Text>
-                    <Text>{taskResult.completionTime}</Text>
-                </div>
-                <Divider />
-                <Form form={form} layout="vertical" onFinish={handleMarkUpdate} initialValues={mark || {}}>
-                    <Form.Item
-                        label="Mark Value"
-                        name="markValue"
-                        rules={[{ required: true, message: 'Please enter a mark' }]}
-                    >
-                        <Input type="number" placeholder="Enter mark" />
-                    </Form.Item>
-                    <Form.Item
-                        label="Comment"
-                        name="comment"
-                        rules={[{ required: true, message: 'Please enter a comment' }]}
-                    >
-                        <Input.TextArea rows={3} placeholder="Enter comment" />
-                    </Form.Item>
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit" style={{ width: '100%' }}>
-                            Update Mark
-                        </Button>
-                    </Form.Item>
-                </Form>
-            </Modal>
-        );
-    };
-
     return (
-        <Layout style={{ padding: '20px', height: '100vh' }}>
-            <Layout>
-                {/* Left Sidebar: Course selection, filter popover, search, create task button, and tasks list */}
-                <Sider style={{ background: '#fff', padding: '20px' }} width={300}>
+        <Layout style={{ height: '100vh' }}>
+            <Layout >
+                {/* Sidebar */}
+                <Sider  style={{ background: '#fff', padding: '20px' }} width={300}>
                     <Title level={4}>Task Administration</Title>
-                    <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
+                    <div style={{ marginBottom: 16 }}>
                         <Button type="primary" onClick={() => setSelectCourseModalVisible(true)}>
                             {selectedCourse ? 'Change Course' : 'Select Course'}
                         </Button>
                         {selectedCourse && (
-                            <Tag color="blue" style={{ marginLeft: 8 }}>
-                                {selectedCourse.name}
-                            </Tag>
+                            <Tag color="red" style={{ marginLeft: 8 }}>{selectedCourse.name}</Tag>
                         )}
                     </div>
+
                     <Divider />
-                    <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
                         <Popover content={filterContent} trigger="click">
                             <Button icon={<FilterOutlined />} />
                         </Popover>
                         <Input
-                            style={{ marginLeft: 8 }}
                             placeholder="Search tasks..."
                             value={filterName}
                             onChange={(e) => setFilterName(e.target.value)}
+                            style={{ marginLeft: 8 }}
                             prefix={<SearchOutlined />}
                         />
                     </div>
+
                     <Divider />
-                    <div style={{ marginBottom: '16px' }}>
-                        <Button
-                            type="primary"
-                            style={{ width: '100%' }}
-                            onClick={() => setCreateTaskDrawerVisible(true)}
-                            disabled={!selectedCourse}
-                        >
-                            <PlusCircleOutlined /> Create Task
-                        </Button>
-                    </div>
+                    <Button
+                        type="primary"
+                        block
+                        onClick={() => setCreateTaskDrawerVisible(true)}
+                        disabled={!selectedCourse}
+                    >
+                        <PlusCircleOutlined /> Create Task
+                    </Button>
+
                     <List
                         header={<div>Tasks</div>}
                         bordered
                         dataSource={filteredTasks}
+                        style={{ marginTop: 16 }}
                         renderItem={(item) => (
                             <List.Item
+                                onClick={() => onTaskSelect(item)}
                                 style={{
                                     cursor: 'pointer',
-                                    background: selectedTask?.id === item.id ? '#e6f7ff' : 'transparent',
-                                    padding: 12,
+                                    background: selectedTask?.id === item.id ? "#2B2D42" : 'transparent',
                                 }}
-                                onClick={() => onTaskSelect(item)}
                             >
-                                <div>
-                                    <Text strong>{item.name}</Text>
-                                    <br />
-                                    <Text type="secondary">
-                                        {item.status === 'active' ? 'Active' : 'Deadline Passed'}
-                                    </Text>
-                                </div>
+                                <Text style={{color: selectedTask?.id === item.id ? "white" : 'black'}} strong>{item.name}</Text><br />
+                                <Text style={{color: selectedTask?.id === item.id ? "rgba(255, 255,255, 0.6)" : 'rgba(0, 0, 0, 0.45)'}} type="secondary">
+                                    {moment(item.deadline).isSameOrAfter(moment(), 'day') ? 'Active' : 'Deadline Passed'}
+                                </Text>
                             </List.Item>
                         )}
                     />
                 </Sider>
 
-                {/* Right Panel: Task Details Tabs */}
+                {/* Content */}
                 <Content style={{ padding: '20px', background: '#fff' }}>
                     {selectedTask ? (
-                        <Card title="Task Details">
-                            <Tabs defaultActiveKey="details" type="line" style={{ padding: '16px 0' }}>
-                                <TabPane tab="Task Details" key="details">
-                                    <div style={{ padding: 24 }}>
-                                        <div style={{ marginBottom: 16 }}>
-                                            <Title level={3}>{selectedTask.name}</Title>
-                                        </div>
-                                        <Row gutter={16} style={{ marginBottom: 16 }}>
-                                            <Col span={12}>
-                                                <Text strong>Created:</Text> {selectedTask.createdAt}
-                                            </Col>
-                                            <Col span={12}>
-                                                <Text strong>Deadline:</Text> {selectedTask.deadline}
-                                            </Col>
-                                        </Row>
-                                        <div style={{ marginBottom: 16 }}>
-                                            <Text strong>Description:</Text>
-                                            <p>{selectedTask.description}</p>
-                                        </div>
-                                        <Divider>Attached Files</Divider>
-                                        <List
-                                            dataSource={selectedTask.attachedFiles}
-                                            renderItem={(file) => (
-                                                <List.Item>
-                                                    <a href="#">{file}</a>
-                                                </List.Item>
-                                            )}
-                                        />
-                                    </div>
-                                </TabPane>
-                                <TabPane tab="Task Results" key="results">
-                                    <div style={{ padding: 24 }}>
-                                        <List
-                                            header={<div>Task Results</div>}
-                                            dataSource={tasks.length > 0 ? tasks[0].results || [] : []}
-                                            // For demonstration, assume that the selectedTask has a field "results"
-                                            // that contains the task results array. In a real app, you would fetch
-                                            // these via an API call: GET({ taskId: selectedTask.id }, 'taskresource/taskResult/by/task', {})
-                                            renderItem={(result) => (
-                                                <List.Item
-                                                    style={{ cursor: 'pointer' }}
-                                                    onClick={() => {
-                                                        setSelectedTaskResult(result);
-                                                        setTaskResultModalVisible(true);
-                                                    }}
-                                                >
-                                                    <List.Item.Meta
-                                                        title={`Result from Student: ${result.studentId}`}
-                                                        description={`Completed: ${result.completed ? 'Yes' : 'No'} | Time: ${result.completionTime}`}
-                                                    />
-                                                </List.Item>
-                                            )}
-                                        />
-                                    </div>
-                                </TabPane>
-                            </Tabs>
-                        </Card>
+                        <TaskDetailsCard
+                            task={selectedTask}
+                            onUpdate={handleUpdateTask}
+                            onDelete={handleDeleteTask}
+                        />
                     ) : (
-                        <Card>
-                            <Title level={4}>Select a task to see details.</Title>
-                        </Card>
+                        <Card><Title level={4}>Select a task to see details.</Title></Card>
                     )}
                 </Content>
             </Layout>
 
-            {/* Create Task Drawer Modal */}
+            {/* Create Task Drawer */}
             <CreateTaskDrawer
                 visible={createTaskDrawerVisible}
                 onClose={() => setCreateTaskDrawerVisible(false)}
@@ -737,22 +582,16 @@ const TasksAdmin = () => {
                 selectedCourse={selectedCourse}
             />
 
-            {/* Select Course Modal */}
+            {/* Course Selection Modal */}
             <SelectCourseModal
                 visible={selectCourseModalVisible}
                 onClose={() => setSelectCourseModalVisible(false)}
-                onSelect={(course) => setSelectedCourse(course)}
+                onSelect={(course) => {
+                    setSelectedCourse(course)
+                    setSearchParams({ courseId: course.id });
+                }}
                 courses={courses}
             />
-
-            {/* Task Result Modal */}
-            {selectedTaskResult && (
-                <TaskResultModal
-                    visible={taskResultModalVisible}
-                    onClose={() => setTaskResultModalVisible(false)}
-                    taskResult={selectedTaskResult}
-                />
-            )}
         </Layout>
     );
 };
