@@ -3,7 +3,11 @@
   border-color: #2B2D42 !important;
   color: #fff !important; /* Чтобы текст был читаем */
 }
-
+.ant-steps-item-finish .ant-steps-icon .anticon{
+  svg{
+    fill: white !important;
+  }
+}
 :where(.css-dev-only-do-not-override-tjsggz).ant-btn-variant-solid:hover {
   background: #D90429 !important;
   border-color: #D90429 !important;
@@ -15,12 +19,14 @@
   border-color: #D90429 !important;
   box-shadow: 0 0 0 1x rgba(217, 4, 41, 0.2) !important;
 }
-
-.custom-steps .ant-steps-item-process .ant-steps-item-icon {
+:where(.css-dev-only-do-not-override-1hekg3w).ant-card:not(.ant-card-bordered){
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 10px;
+}
+:where(.css-dev-only-do-not-override-1hekg3w).ant-steps .ant-steps-item-finish .ant-steps-item-icon{
   background-color: #D90429 !important;
   border-color: #D90429  !important;
 }
-.custom-steps .ant-steps-item-finish .ant-steps-item-icon {
+.anticon .anticon-check .ant-steps-finish-icon{
   background-color: #2B2D42 !important;
   border-color: #2B2D42 !important;
   svg{
