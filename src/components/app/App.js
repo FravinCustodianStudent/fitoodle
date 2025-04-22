@@ -63,7 +63,7 @@ const router = createBrowserRouter([
             element: <Settings/>,
         },
         {
-            path:'/courses/task/test/:taskId/:testId/question',
+            path:'/courses/task/test/:taskId/:testId/:testConfigId/question',
             element: <TestPage/>,
         },
         {

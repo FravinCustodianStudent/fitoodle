@@ -51,12 +51,23 @@
       svg{
         fill: white;
       }
+      &:hover{
+        background-color: $mainColour;
+        .svg{
+          fill: white;
+
+        }
+        &::after{
+          transform: none;
+        }
+      }
       &::after{
         position: absolute;
         width: 70px;
         height: 70px;
         content: "";
         border-radius: 30px;
+        transition: .3s ease-in-out;
         transform: translateX(-5px) translateY(5px);
         z-index: -1;
         background-color: #D90429;
@@ -70,11 +81,21 @@
       justify-content: center;
       align-items: center;
       border-radius: 30px;
-      transition: .5s;
+      transition: .3s;
+      &:hover{
+        background-color: $subColour;
+        .svg{
+          fill: $mainColour;
+          transform: scale(1.2);
+        }
+
+      }
       .svg{
           height: 34px;
           width: 33px;
+          transition: .3s;
           fill: $gray;
+
       }
     }
   }

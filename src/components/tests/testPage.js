@@ -13,7 +13,7 @@ import {useParams, useSearchParams} from "react-router-dom";
 import {useHttp} from "../../hooks/http.hook";
 import {addAnswer, loadQuestions, loadTestConfig, modifyAnswerById, setTime} from "../../slices/testSlice";
 import {Oval} from "react-loader-spinner";
-
+import { Image } from 'antd';
 const TestPage = () =>{
     const [typeOfElement, setTypeOfElement] = useState("s");
     const dispatch = useDispatch();
@@ -45,12 +45,20 @@ const TestPage = () =>{
                             date.setMinutes(date.getMinutes() + res.data.timeLimitation);
                             updateRemainingTime(date,res.data.timeLimitation)
                             setInterval(()=>updateRemainingTime(date,res.data.timeLimitation),1000)
-                            console.log(result.data.questions[currentQuestion-1])
                         })
                 })
         }
 
     }, [user]);
+    // Helpers for Google Drive thumbnail URLs
+    function getDriveFileId(url) {
+        const m = url.match(/\/d\/([^/]+)\//);
+        return m ? m[1] : null;
+    }
+    function getDriveThumbnailUrl(url) {
+        const id = getDriveFileId(url);
+        return id ? `https://drive.google.com/thumbnail?id=${id}` : url;
+    }
     const renderHeader = () =>{
 
         const items = [];
@@ -84,7 +92,7 @@ const TestPage = () =>{
 
         // Вычисляем оставшиеся минуты и секунды
         const remainingMinutes = Math.floor(secondsRemaining / 60);
-        const remainingSeconds = secondsRemaining % 60;
+        const remainingSeconds = secondsRemaining % 60 <10?"0"+secondsRemaining % 60 :secondsRemaining % 60;
         setEliminationTimer(remainingMinutes +":"+remainingSeconds )
     }
     const setQuestionAnswer =  (numberOfNextQuestion) => {
@@ -136,7 +144,7 @@ const TestPage = () =>{
             testMarkValue:testConfig.maxTestMark
         }
         console.log(objectToCheck);
-        POST({},`testingresource/tests/${tests.id}/complete`,{Authorization:localStorage.getItem("jwt")},objectToCheck)
+        POST({},`testingresource/tests/${tests.id}/complete`,{},objectToCheck)
             .then((res)=>{
                 console.log(res)
                 setTestResult(res.data.testResult);
@@ -158,7 +166,6 @@ const TestPage = () =>{
             }else {
                 setAnswer([])
             }
-
             setCurrentQuestion(numberOfAnswer);
             setCurrentQuestionContent(tests.questions[numberOfAnswer-1]);
             setCurrentQuestion(numberOfAnswer);
@@ -244,7 +251,7 @@ const TestPage = () =>{
                                         <HandySvg src={questionSrc}/>
                                     </div>
                                     <div className="question__main__info__header__content__name">
-                                        Питання 2 - {currentQuestionContent.name}
+                                        Питання - {currentQuestionContent.name}
                                     </div>
                                 </div>
                                 <div className="question__main__info__header__description">
@@ -266,6 +273,15 @@ const TestPage = () =>{
                                 </div>
                             </div>
                         </div>
+                        {
+                            tests.questions[currentQuestion-1].attachmentUrl? <div className="question__main__image">
+                                <Image
+                                    width={415}
+                                    src={getDriveThumbnailUrl(tests.questions[currentQuestion-1].attachmentUrl)}
+                                />
+                            </div>:<></>
+                        }
+
                     </div></>;
                 break;
 

@@ -285,7 +285,7 @@ const TestGroupsStep = ({ onBack, onNext }) => {
             const oldAnswer = editingQuestion?.answers?.find(x => x.id === a.id);
 
             return {
-                id: a.id || crypto.randomUUID(),
+                id: a.id,
                 text: a.text,
                 correct: a.correct,
                 attachmentUrl:
@@ -295,7 +295,7 @@ const TestGroupsStep = ({ onBack, onNext }) => {
             };
         });
 
-        const payload = {
+        let payload = {
             name,
             questionText,
             questionGroupId: selectedGroup.id,
@@ -307,8 +307,11 @@ const TestGroupsStep = ({ onBack, onNext }) => {
         };
 
         if (editingQuestion) {
+            payload = {
+                ...payload, id: editingQuestion.id
+            }
             try {
-                await PUT({}, `testingresource/questions/${editingQuestion.id}`, {}, payload);
+                await PUT({}, `testingresource/questions`, {}, payload);
                 setSelectedGroup(g => ({
                     ...g,
                     questions: g.questions.map(q =>
@@ -375,7 +378,7 @@ const TestGroupsStep = ({ onBack, onNext }) => {
                                 <List.Item
                                     key={g.id}
                                     style={{
-                                        background: selectedGroup?.id === g.id ? '#e6f7ff' : undefined,
+                                        background: selectedGroup?.id === g.id ? 'rgba(43,45,66,0.06)' : undefined,
                                         cursor: 'pointer',
                                     }}
                                     onClick={() => setSelectedGroup(g)}

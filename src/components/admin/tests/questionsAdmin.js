@@ -46,7 +46,7 @@ const QuestionsAdmin = () => {
     const [activeTask, setActiveTask] = useState(null);
     const [isTaskDrawerVisible, setIsTaskDrawerVisible] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
-
+    const [eduCourseId, setEduCourseId] = useState(null);
     // Step 2 — Groups
     const [questionGroups, setQuestionGroups] = useState([]);
     const [isGroupDrawerVisible, setIsGroupDrawerVisible] = useState(false);
@@ -55,6 +55,22 @@ const QuestionsAdmin = () => {
 
     // Step 3 — Configs
     const [questionConfigs, setQuestionConfigs] = useState([]);
+    // add this inside your component body:
+    const handleAddConfig = (config) => {
+        setQuestionConfigs(prev => [...prev, config]);
+    };
+    // Update
+    const handleUpdateConfig = updatedConfig => {
+        setQuestionConfigs(prev =>
+            prev.map(c => c.id === updatedConfig.id ? updatedConfig : c)
+        );
+    };
+
+    const handleDeleteConfig = (configId) => {
+        setQuestionConfigs(prev =>
+            prev.filter(c => c.id !== configId)
+        );
+    };
 
     // Test drawer (used in Step 2)
     const [isTestDrawerVisible, setIsTestDrawerVisible] = useState(false);
@@ -68,6 +84,7 @@ const QuestionsAdmin = () => {
 
     useEffect(() => {
         const courseIdParam = searchParams.get('courseId');
+        setEduCourseId(courseIdParam);
         if (courseIdParam) fetchCourseInfo(courseIdParam);
     }, [searchParams]);
 
@@ -266,6 +283,7 @@ const QuestionsAdmin = () => {
                     {currentStep === 0 && (
                         <LinkedTestsStep
                             testGroups={questionGroups}
+                            eduCourseId={eduCourseId}
                             selectedTest={selectedTestDetail}
                             setSelectedTest={setSelectedTestDetail}
                             onCreateClick={() => setCurrentStep(1)}
@@ -338,9 +356,13 @@ const QuestionsAdmin = () => {
                     {currentStep === 3 && (
                         <TestManagementStep
                             finalTestData={finalTestData}
+                            activeTask={tasks.find(t => t.id === finalTestData.taskId)}
+                            onAddConfig={handleAddConfig}
+                            questionGroups={questionGroups}
+                            onDeleteConfig={handleDeleteConfig}
+                            onUpdateConfig={handleUpdateConfig}
                             questionConfigs={questionConfigs}
                             onBack={() => setCurrentStep(2)}
-                            onAddConfig={addConfig}
                         />
                     )}
                 </>

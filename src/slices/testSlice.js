@@ -24,7 +24,6 @@ const testSlice = createSlice(
             },
             addAnswer:(state,action)=>{
                 state.answers = [...state.answers,action.payload];
-                console.log(state.answers);
             },
             removeAnswer: (state, action) => {
                 const indexToRemove = state.answers.findIndex(answer => answer === action.payload);

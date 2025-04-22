@@ -191,8 +191,14 @@
             justify-content: center;
             width: 34px;
             height: 34px;
+            cursor: pointer;
+            transition: .25s;
             border-radius: 11px;
             background-color: $mainColour;
+            &:hover{
+              background-color: $contrastRed;
+              transform: scale(1.15);
+            }
             svg{
               width: 14px;
               height: 12px;

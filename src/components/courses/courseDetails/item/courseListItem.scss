@@ -68,6 +68,15 @@
         border: 1px solid $darkGray;
         width: 34px;
         height: 48px;
+        transition: .3s;
+        &:hover{
+          background-color: $contrastRed;
+          border: 1px solid $contrastRed;
+          transform: scale(1.15);
+          svg{
+            fill: white;
+          }
+        }
         svg{
           width: 14px;
           height: 14px;
@@ -84,6 +93,11 @@
       height: 100%;
       content: "";
       background-color: $mainColour;
+    }
+  }
+  .test{
+    &::before{
+      background-color: $contrastRed;
     }
   }
 }

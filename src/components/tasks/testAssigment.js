@@ -8,49 +8,63 @@ import {useEffect, useState} from "react";
 import {useParams} from "react-router-dom";
 import {useSelector} from "react-redux";
 import {Oval} from "react-loader-spinner";
-
+import {Link} from "react-router-dom";
+import {Image} from "antd";
 const TestAssigment = () =>{
     const {GET} = useHttp();
-    const [result, setResult] = useState();
+    const [testConfig, setTestConfig] = useState()
     const [task, setTask] = useState();
+    const [test, setTest] = useState()
     const {taskId} = useParams();
     const {testId} = useParams();
     const [Loading, setLoading] = useState(true)
     const user = useSelector(state => state.users.user);
     useEffect(() => {
         if (Object.keys(user).length!==0){
-            GET({taskId:taskId},"testingresource/testConfigs/by/task",{Authorization:localStorage.getItem("jwt")})
+            GET({taskId:taskId},"testingresource/testConfigs/by/task",{})
                 .then((res)=>{
-                    console.log(res.data);
-                    //taskresource
-                    setTask(res.data);
-                    GET({testConfigId:res.data.id,userId:user.id},"testingresource/tests/by/testConfig/user",{Authorization:localStorage.getItem("jwt")})
+                    setTest(res.data);
+                    GET({testConfigId:res.data.id,userId:user.id},"testingresource/tests/by/testConfig/user",{})
                         .then((result)=>{
-                            console.log(result.data)
-
+                            setTestConfig(result.data);
+                            GET({taskId:taskId},`taskresource/tasks/${taskId}`,{})
+                                .then((res)=>{
+                                    console.log(res);
+                                    setTask(res.data);
+                                    setLoading(false);
+                                })
                         });
                 });
         }
 
     }, [user]);
+    // Helpers for Google Drive thumbnail URLs
+    function getDriveFileId(url) {
+        const m = url.match(/\/d\/([^/]+)\//);
+        return m ? m[1] : null;
+    }
+    function getDriveThumbnailUrl(url) {
+        const id = getDriveFileId(url);
+        return id ? `https://drive.google.com/thumbnail?id=${id}` : url;
+    }
     const renderItem = () =>{
         return(
             <div className="test-assignment">
                 <div className="test-assignment__header">
                     <div className="test-assignment__header__name">
-                        <div className="test-assignment__header__name__text">Lorem ipsum dolor sit amet consectetur. Morbi consectetur sodales pellentesque.</div>
+                        <div className="test-assignment__header__name__text">{test.name}</div>
                         <div className="test-assignment__header__name__info">
-                            <div className="test-assignment__header__name__info__type">Lab</div>
+                            <div className="test-assignment__header__name__info__type">Test</div>
                             <div className="test-assignment__header__name__info__separator"></div>
-                            <div className="test-assignment__header__name__info__date">22.08.2023</div>
+                            <div className="test-assignment__header__name__info__date">{test.timeLimitation} minutes</div>
                         </div>
                     </div>
                     <div className="test-assignment__header__info">
                         <div className="test-assignment__header__info__details">
-                            <div className="test-assignment__header__info__details__questions-marks">due date 23.01.24</div>
+                            <div className="test-assignment__header__info__details__questions-marks">due date {task.deadline}</div>
                             <div className="test-assignment__header__info__details__mark">
                                 <div className="test-assignment__header__info__details__mark__name">Current result</div>
-                                <div className="test-assignment__header__info__details__mark__content">0/10</div>
+                                <div className="test-assignment__header__info__details__mark__content">0/{task.maxMarkValue}</div>
                             </div>
                         </div>
                         <div className="test-assignment__header__info__icon">
@@ -67,19 +81,26 @@ const TestAssigment = () =>{
                                 <div className="test-assignment__main__description__info__header__icon"><HandySvg src={infoSrc}/></div>
                                 <div className="test-assignment__main__description__info__header__name">Загальна кількість питань</div>
                             </div>
-                            <div className="test-assignment__main__description__info__date">20 питань на 10 балів</div>
+                            <div className="test-assignment__main__description__info__date">{testConfig.questions.length} питань на {task.maxMarkValue} балів</div>
                             <div className="test-assignment__main__description__info__content">
-                                Lorem ipsum dolor sit amet consectetur. Sit sagittis ultrices scelerisque leo. Ut facilisis id <span>a morbi vestibulum semper euismod lacinia lorem. Non eu aliquam aenean maecenas sit.</span>
-
-                                Donec ut pellentesque pulvinar non. In amet tincidunt netus quam mauris turpis. Sit pellentesque maecenas felis dignissim fringilla non pharetra viverra vulputate. Semper sit mi in sollicitudin consectetur eu scelerisque velit facilisi.
+                                {test.description}
                             </div>
                             <div className="test-assignment__main__description__info__control-button">
-                                <a><div className="test-assignment__main__description__info__control-button__icon">
+                                <Link to={`/courses/task/test/${taskId}/${test.id}/${testConfig.id}/question`}><div className="test-assignment__main__description__info__control-button__icon">
                                     <HandySvg src={arrowSrc}/>
-                                </div></a>
+                                </div></Link>
+
 
                             </div>
                         </div>
+                    </div>
+                </div>
+                <div className="test-assignment__main__description">
+                    <div className="test-assignment__main__description__image">
+                        {/*<Image*/}
+                        {/*    width={415}*/}
+                        {/*    src={getDriveThumbnailUrl(task[0].attachedFiles)}*/}
+                        {/*/>*/}
                     </div>
                 </div>
             </div>

@@ -5,25 +5,32 @@ import {Link} from "react-router-dom";
 import {useHttp} from "../../../hooks/http.hook";
 import {useEffect, useState} from "react";
 import {useErrorBoundary, withErrorBoundary} from "react-use-error-boundary";
-const Task = withErrorBoundary(({id,taskName,deadline,createdAt,authorId}) =>{
+import {Spin} from "antd";
+import {LoadingOutlined} from "@ant-design/icons";
+const Task = withErrorBoundary(({id,testId,taskName,deadline,createdAt,authorId}) =>{
     const {GET} = useHttp();
     const [author, setAuthor] = useState()
     const [error,resetError] = useErrorBoundary();
-    const [testExisting, setTestExisting] = useState(false);
-    const [test, setTest] = useState()
+    const [test, setTest] = useState(null)
+    const [loading, setLoading] = useState(true);
     useEffect(()=>{
        CreateAuthor(authorId);
-       GET({taskId:id},"testingresource/testConfigs/by/task",{Authorization:localStorage.getItem("jwt")})
-           .then((res)=>{
-               console.log(res);
-               if (res.data!==null){
-                   setTestExisting(true);
+       if(testId && !test){
+           GET({taskId:id},"testingresource/testConfigs/by/task")
+               .then((res)=>{
+                   console.log(res.data)
                    setTest(res.data);
-               }
-           }).catch((err)=>{
+                   setLoading(false);
+               }).catch((err)=>{
+                   console.log(err)
+                error(err);
+           })
+       } else if(!testId){
+           setLoading(false);
+       }
 
-       })
-    },[])
+
+    },[test])
     const CompareDates = (deadline)=>{
         const today = new Date();
         const [year, month, day] = deadline.split('-').map(Number);
@@ -49,9 +56,36 @@ const Task = withErrorBoundary(({id,taskName,deadline,createdAt,authorId}) =>{
             unformattedDate.getFullYear()}`
         return readyDate;
     }
-    return(
-        <>
-            <div className={CompareDates(deadline)? "task outdated":"task"} >
+    const renderContent = () => {
+        if (testId){
+            return (<div className={CompareDates(deadline)? "task outdated":"task"} >
+                <div className="task__info">
+                    <div className="task__info__status"></div>
+                    <div className="task__info__name">
+                        <div className="task__info__name__task">{test.name}</div>
+                        <div className="task__info__name__teacher">{author}</div>
+                    </div>
+                </div>
+                <div className="task__action">
+                    <div className="task__action__dates">
+                        <div className="task__action__dates__from">
+                            <div className="task__action__dates__from__name">Дата створення</div>
+                            <div className="task__action__dates__from__separator"></div>
+                            <div className="task__action__dates__from__content">{ConvertDate(createdAt)}</div>
+                        </div>
+                        <div className="task__action__dates__to">
+                            <div className="task__action__dates__to__name">Дата здачі</div>
+                            <div className="task__action__dates__to__separator"></div>
+                            <div className="task__action__dates__to__content">{ConvertDate(deadline)}</div>
+                        </div>
+                    </div>
+                    <Link to={`/courses/task/test/${id}/${test.id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link>
+
+
+                </div>
+            </div>)
+        }else {
+            return (<div className={CompareDates(deadline)? "task outdated":"task"} >
                 <div className="task__info">
                     <div className="task__info__status"></div>
                     <div className="task__info__name">
@@ -72,12 +106,18 @@ const Task = withErrorBoundary(({id,taskName,deadline,createdAt,authorId}) =>{
                             <div className="task__action__dates__to__content">{ConvertDate(deadline)}</div>
                         </div>
                     </div>
-                    {testExisting ? <Link to={`/courses/task/test/${id}/${test.id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link> :
-                        <Link to={`/courses/task/${id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link>}
+                    <Link to={`/courses/task/${id}`}><div className="task__action__button"><HandySvg src={arrowSrc}/></div></Link>
 
 
                 </div>
-            </div>
+            </div>)
+        }
+
+    }
+    return(
+        <>
+            {!loading?renderContent():   <Spin indicator={<LoadingOutlined spin />} size="large" />}
+
         </>
 
     )

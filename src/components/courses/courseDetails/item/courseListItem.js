@@ -2,29 +2,35 @@ import "./courseListItem.scss";
 import {HandySvg} from "handy-svg";
 import accountSrc from "../../../../assets/account.svg";
 import labSrc from "../../../../assets/lab.svg";
+import {FileDoneOutlined, LoadingOutlined} from "@ant-design/icons";
 import arrowSrc from   "../../../../assets/arrow.svg"
 import {useHttp} from "../../../../hooks/http.hook";
 import {useEffect, useState} from "react";
 import {Link} from "react-router-dom";
-const CourseListItem = ({task,mark,taskId}) =>{
+import {Spin} from "antd";
+const CourseListItem = ({task,mark,testId,taskId}) =>{
     const [teacherFullName, setTeacherFullName] = useState();
     const {GET} = useHttp();
+    const [loading, setLoading] = useState(true);
     useEffect(() => {
-        console.log(task);
-        console.log(mark);
-        GET({},"userdataresource/users/"+task.authorId,{Authorization:localStorage.getItem("jwt")})
+        console.log(testId);
+        GET({},"userdataresource/users/"+task.authorId,{})
             .then((result)=>{
                 const authorFullName = result.data.firstName + " " + result.data.lastName;
                 setTeacherFullName(authorFullName);
+                setLoading(false);
             })
     }, []);
 
-    return <div className="class__details__content__list__content__item">
+    return<>
+    {loading?<><Spin indicator={<LoadingOutlined spin />} size="large" /></> :
+        <div className={task.testId?"class__details__content__list__content__item test" :"class__details__content__list__content__item"}>
         <div className="class__details__content__list__content__item__container">
             <div className="class__details__content__list__content__item__container__header">
                 <div className="class__details__content__list__content__item__container__header__name">
                     <div className="class__details__content__list__content__item__container__header__name__icon">
-                        <HandySvg src={labSrc}/>
+                        {task.testId?<FileDoneOutlined />:<HandySvg src={labSrc}/>}
+
                     </div>
                     <div className="class__details__content__list__content__item__container__header__name__content">{task.name}</div>
                 </div>
@@ -41,9 +47,12 @@ const CourseListItem = ({task,mark,taskId}) =>{
         </div>
         <div className="class__details__content__list__content__item__link">
             <div className="class__details__content__list__content__item__link__mark">{mark.markValue}/{task.maxMarkValue}</div>
-            <Link to={`/courses/task/${taskId}`}><div className="class__details__content__list__content__item__link__button"> <HandySvg src={arrowSrc}/></div></Link>
+            {!taskId?<Link to={`/courses/task/${taskId}`}><div className="class__details__content__list__content__item__link__button"> <HandySvg src={arrowSrc}/></div></Link>:
+                <Link to={`/courses/task/test/${taskId}/${testId}`}><div className="class__details__content__list__content__item__link__button"> <HandySvg src={arrowSrc}/></div></Link>}
+
 
         </div>
-    </div>
+    </div>}
+    </>
 }
 export default CourseListItem;

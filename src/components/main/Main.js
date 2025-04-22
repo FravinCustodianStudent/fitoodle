@@ -34,14 +34,9 @@ const Main = withErrorBoundary(() => {
                             if(result.data.length!==0){
                                 GET({eduCourseId:result.data[0].id},"taskresource/tasks/by/course",{})
                                     .then((spacite)=>{
-                                        console.log(spacite)
-                                        console.log(spacite.data.length)
-
                                         if (spacite.data.length!==0 && spacite.data !==null){
                                             setTasks(spacite.data);
-                                            console.log(Tasks)
                                             setLoading(false);
-                                            // console.log(Tasks[0].deadline );
                                         }else {
                                             setLoading(false)
                                             setError(true)
@@ -68,7 +63,7 @@ const Main = withErrorBoundary(() => {
              items = arr.map((item, i) => {
 
                 return(
-                    <Task id={Tasks[i].id} deadline={Tasks[i].deadline} taskName={Tasks[i].name} authorId={Tasks[i].authorId} createdAt={Tasks[i].createdAt} />
+                    <Task testId={Tasks[i].testId} id={Tasks[i].id} deadline={Tasks[i].deadline} taskName={Tasks[i].name} authorId={Tasks[i].authorId} createdAt={Tasks[i].createdAt} />
                 )
             })
         }
@@ -86,7 +81,7 @@ const Main = withErrorBoundary(() => {
                         <div className="main__content__tasks__info__name">
                             <div className="main__content__tasks__info__name__text">Завдання</div>
                             {error ? <div className="main__content__tasks__info__name__count">0</div>:
-                                <div className="main__content__tasks__info__name__count">3</div>}
+                                <div className="main__content__tasks__info__name__count">{Tasks.length}</div>}
 
                         </div>
 

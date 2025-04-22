@@ -23,7 +23,6 @@ const Header = () => {
         if (user==null || Object.keys(user).length == 0){
             GET(null,"authresource/auth/login")
                 .then((res)=>{
-                    console.log(res)
                     dispatch(setUser(res.data))
                     setLoading(false);
                 }).catch((err)=>{
@@ -32,7 +31,6 @@ const Header = () => {
             })
         }else {
             setLoading(false);
-            console.log(checkUserAuthority())
         }
     },[user]);
     const checkUserAuthority = () =>{

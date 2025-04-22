@@ -114,8 +114,14 @@
           height: 100%;
           box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
           border-radius: 10px;
-
+          transition: 0.3s;
           z-index: 5;
+          cursor: pointer;
+          &:hover{
+            background-color: $contrastRed;
+            transform: scale(1.1);
+            color: white;
+          }
         }
 
       }
@@ -124,7 +130,13 @@
           background-color: $mainColour;
           color: white;
         }
+        &:hover{
 
+          &::before{
+            left: 0;
+            bottom: 0;
+          }
+        }
         &::before{
           position: absolute;
           z-index: -1;
@@ -132,6 +144,7 @@
           width: 100%;
           left: -5px;
           border-radius: 10px;
+          transition: 0.3s;
           bottom: -5px;
           content: "";
           background-color: $contrastRed;
@@ -142,6 +155,7 @@
   &__main{
     margin-top: 50px;
     display: flex;
+    gap: 50px;
     &__info{
       &__header{
 
@@ -210,6 +224,12 @@
           font-weight: 600;
           color: white;
           padding: 0 15px;
+          transition: 0.3s;
+          cursor: pointer;
+          &:hover{
+            background-color: $contrastRed;
+            transform: scale(1.05);
+          }
           svg{
             width: 18px;
             height: 18px;
@@ -229,8 +249,22 @@
           color: $mainColour;
           font-weight: 500;
           margin-right: 50px;
+          transition: 0.3s;
+          cursor: pointer;
+          &:hover{
+            transform: scale(1.05);
+            background-color: $contrastRed;
+            color: white;
+            border: 1px solid $contrastRed;
+          }
         }
       }
+
+    }
+    &__image{
+      width: 100%;
+      display: flex;
+      justify-content: center;
     }
     &__answer{
       margin-left: 100px;

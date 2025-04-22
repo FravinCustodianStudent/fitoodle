@@ -55,11 +55,10 @@ const CourseDetails = withErrorBoundary(() =>{
                 }
         });
     }
-    //TODO пнуть Максима за говно на апи по таск резаоту
     const renderItems = arr =>{
         const items = arr.map((item, i) => {
             return(
-                <CourseListItem mark={Marks[i]} task={Tasks[i]} taskId={Tasks[i].id}/>
+                <CourseListItem mark={Marks[i]} testId={Tasks[i].testId} task={Tasks[i]} taskId={Tasks[i].id}/>
             )
         })
         return <>

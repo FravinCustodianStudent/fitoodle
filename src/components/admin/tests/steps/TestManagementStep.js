@@ -1,180 +1,237 @@
 import React, { useState } from 'react';
-import { Row, Col, Card, List, Button, Drawer, Form, InputNumber, Select } from 'antd';
-import { FileTextOutlined, PlusOutlined } from '@ant-design/icons';
+import { Row, Col, Card, Button, List, Drawer, Form, InputNumber, message, Modal } from 'antd';
+import { FileTextOutlined, PlusOutlined, ArrowLeftOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { useHttp } from '../../../../hooks/http.hook';
 
-const { Option } = Select;
-
+// TestManagementStep: review configs and create test via API
+// Props:
+// finalTestData: { testName, description, timeLimitation, taskId }
+// activeTask: selected task object
+// questionConfigs: initial array of configs {id, markPerQuestion, numberOfQuestions, questionGroupId}
+// questionGroups: array of available groups {id, name}
+// onBack: () => void
+// onComplete: () => void (called after successful test creation)
 const TestManagementStep = ({
-                                finalTestData = {},
+                                finalTestData,
                                 activeTask,
-                                questionGroups = [],
-                                setFinalTestData,
+                                questionConfigs,
+                                questionGroups,
                                 onBack,
-                                onNext
+                                onComplete
                             }) => {
-    const [basicDrawerVisible, setBasicDrawerVisible] = useState(false);
-    const [groupDrawerVisible, setGroupDrawerVisible] = useState(false);
-    const [basicForm] = Form.useForm();
-    const [groupForm] = Form.useForm();
-    const [newConfigBasic, setNewConfigBasic] = useState({});
+    const { POST,PUT } = useHttp();
 
-    const openBasicDrawer = () => {
-        basicForm.resetFields();
-        setBasicDrawerVisible(true);
+    const [localConfigs, setLocalConfigs] = useState(questionConfigs);
+    const [drawerVisible, setDrawerVisible] = useState(false);
+    const [editingConfig, setEditingConfig] = useState(null);
+    const [selectedGroup, setSelectedGroup] = useState(null);
+    const [form] = Form.useForm();
+
+    // Open add-new-config drawer
+    const openAddDrawer = () => {
+        setEditingConfig(null);
+        setSelectedGroup(null);
+        form.resetFields();
+        setDrawerVisible(true);
     };
 
-    const closeBasicDrawer = () => setBasicDrawerVisible(false);
+    // Open edit-config drawer with pre-filled values
+    const openEditDrawer = (cfg) => {
+        setEditingConfig(cfg);
+        const grp = questionGroups.find(g => g.id === cfg.questionGroupId) || null;
+        setSelectedGroup(grp);
+        form.setFieldsValue({
+            markPerQuestion: cfg.markPerQuestion,
+            numberOfQuestions: cfg.numberOfQuestions
+        });
+        setDrawerVisible(true);
+    };
 
-    const handleBasicNext = async () => {
+    // Close drawer
+    const closeDrawer = () => {
+        setDrawerVisible(false);
+        setEditingConfig(null);
+        setSelectedGroup(null);
+    };
+
+    // Save config (add or update)
+    const handleSaveConfig = async () => {
         try {
-            const values = await basicForm.validateFields();
-            setNewConfigBasic(values);
-            setBasicDrawerVisible(false);
-            setGroupDrawerVisible(true);
-        } catch {
-            // validation errors handled by ANTD
-        }
-    };
-
-    const handleGroupBack = () => {
-        groupForm.resetFields();
-        setGroupDrawerVisible(false);
-        setBasicDrawerVisible(true);
-    };
-
-    const handleGroupSave = async () => {
-        try {
-            const { questionGroupId } = await groupForm.validateFields();
-            const config = {
-                id: crypto.randomUUID(),
-                markPerQuestion: newConfigBasic.markPerQuestion,
-                numberOfQuestions: newConfigBasic.numberOfQuestions,
-                questionGroupId
+            const values = await form.validateFields();
+            if (!selectedGroup) {
+                return message.error('Please select a question group');
+            }
+            const cfg = {
+                id: editingConfig?.id || crypto.randomUUID(),
+                markPerQuestion: values.markPerQuestion,
+                numberOfQuestions: values.numberOfQuestions,
+                questionGroupId: selectedGroup.id
             };
-            setFinalTestData(prev => ({
-                ...prev,
-                testContentConfigurationList: [
-                    ...(prev.testContentConfigurationList || []),
-                    config
-                ]
-            }));
-            setGroupDrawerVisible(false);
+            setLocalConfigs(prev => {
+                if (editingConfig) {
+                    return prev.map(c => c.id === cfg.id ? cfg : c);
+                } else {
+                    return [...prev, cfg];
+                }
+            });
+            closeDrawer();
         } catch {
-            // validation errors handled by ANTD
+            // ANTD handles validation errors
         }
     };
 
-    const configs = finalTestData.testContentConfigurationList || [];
+    // Confirm and create test via API
+    const showCreateConfirm = () => {
+        Modal.confirm({
+            title: 'Confirm Create Test',
+            content: 'Create test and link it to the selected task?',
+            okText: 'Create',
+            cancelText: 'Cancel',
+            onOk: () => {
+                const payload = {
+                    name: finalTestData.testName,
+                    description: finalTestData.description,
+                    taskId: finalTestData.taskId,
+                    timeLimitation: finalTestData.timeLimitation,
+                    testContentConfigurationList: localConfigs.map(c => ({
+                        markPerQuestion: c.markPerQuestion,
+                        numberOfQuestions: c.numberOfQuestions,
+                        questionGroupId: c.questionGroupId
+                    }))
+                };
+                POST({}, 'testingresource/testConfigs', {}, payload)
+                    .then(res => {
+                        const newTestConfigId = res.data.id;
+                        // update the task to link with this new test config
+                        const updatedTask = { ...activeTask, testId: newTestConfigId };
+                        return PUT({}, `taskresource/tasks/${activeTask.id}`, {}, updatedTask);
+                    })
+                    .then(() => {
+                        message.success('Test created and linked successfully');
+                        if (onComplete) onComplete();
+                    })
+                    .catch(() => {
+                        message.error('Failed to create or link test');
+                    });
+            }
+        });
+    };
 
     return (
         <>
-            {/* Navigation */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Button onClick={onBack}>← Back</Button>
-            </div>
+            <Button icon={<ArrowLeftOutlined />} onClick={onBack} style={{ marginBottom: 16 }}>
+                Back
+            </Button>
 
             <Row gutter={16}>
                 <Col span={12}>
-                    <Card title={<><FileTextOutlined /> Final Test Details</>} bordered={false}>
-                        <p><strong>Based on Task:</strong> {activeTask?.name || 'Not selected'}</p>
-                        <p><strong>Name:</strong> {finalTestData.testName || '—'}</p>
-                        <p><strong>Description:</strong> {finalTestData.description || '—'}</p>
-                        <p><strong>Time:</strong> {finalTestData.timeLimitation != null ? `${finalTestData.timeLimitation} minutes` : '—'}</p>
+                    <Card title="Final Test Details" bordered={false}>
+                        <p><strong>Test Name:</strong> {finalTestData.testName}</p>
+                        <p><strong>Description:</strong> {finalTestData.description}</p>
+                        <p><strong>Task:</strong> {activeTask?.name}</p>
+                        <p><strong>Time Limit:</strong> {finalTestData.timeLimitation} minutes</p>
                     </Card>
                 </Col>
 
                 <Col span={12}>
-                    <Card title={<><FileTextOutlined /> Test Configurations</>} bordered={false}>
-                        <Button
-                            block
-                            icon={<PlusOutlined />}
-                            onClick={openBasicDrawer}
-                            style={{ marginBottom: 16 }}
-                        >
-                            Add Configuration
-                        </Button>
-
+                    <Card
+                        title={
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span><FileTextOutlined /> Configurations</span>
+                                <Button type="primary" icon={<PlusOutlined />} onClick={openAddDrawer}>
+                                    Add Configuration
+                                </Button>
+                            </div>
+                        }
+                        bordered={false}
+                    >
                         <List
-                            bordered
-                            dataSource={configs}
+                            dataSource={localConfigs}
                             renderItem={cfg => {
-                                const group = questionGroups.find(g => g.id === cfg.questionGroupId) || {};
+                                const grp = questionGroups.find(g => g.id === cfg.questionGroupId) || {};
                                 return (
-                                    <List.Item>
-                                        <strong>{group.name || 'Unknown Group'}</strong>: {cfg.numberOfQuestions} questions, {cfg.markPerQuestion} marks/question
+                                    <List.Item
+                                        actions={[
+                                            <Button icon={<EditOutlined />} onClick={() => openEditDrawer(cfg)} key="edit" />,
+                                            <Button danger icon={<DeleteOutlined />} onClick={() => setLocalConfigs(prev => prev.filter(c => c.id !== cfg.id))} key="delete" />
+                                        ]}
+                                    >
+                                        <strong>{grp.name || `Group ${cfg.questionGroupId}`}</strong>: {cfg.numberOfQuestions} questions, {cfg.markPerQuestion} marks/question
                                     </List.Item>
                                 );
                             }}
-                            locale={{ emptyText: 'No configurations added yet' }}
+                            locale={{ emptyText: 'No configurations added' }}
                         />
                     </Card>
                 </Col>
             </Row>
 
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+                <Button
+                    type="primary"
+                    onClick={showCreateConfirm}
+                    disabled={localConfigs.length === 0}
+                >
+                    Create Test
+                </Button>
+            </div>
+
             <Drawer
-                title="New Configuration — Step 1: Basic Info"
-                width={400}
-                onClose={closeBasicDrawer}
-                visible={basicDrawerVisible}
+                title={editingConfig ? 'Edit Configuration' : 'New Configuration'}
+                width={360}
+                visible={drawerVisible}
+                onClose={closeDrawer}
+                bodyStyle={{ paddingBottom: 80 }}
                 destroyOnClose
                 footer={(
                     <div style={{ textAlign: 'right' }}>
-                        <Button onClick={closeBasicDrawer} style={{ marginRight: 8 }}>
+                        <Button onClick={closeDrawer} style={{ marginRight: 8 }}>
                             Cancel
                         </Button>
-                        <Button type="primary" onClick={handleBasicNext}>
-                            Next
+                        <Button onClick={handleSaveConfig} type="primary">
+                            Save
                         </Button>
                     </div>
                 )}
             >
-                <Form form={basicForm} layout="vertical">
+                <Form form={form} layout="vertical" initialValues={{ markPerQuestion: 1, numberOfQuestions: 2 }}>
                     <Form.Item
                         name="markPerQuestion"
-                        label="Mark Per Question"
-                        rules={[{ required: true, message: 'Enter marks per question' }]}
+                        label="Marks per Question"
+                        rules={[{ required: true, message: 'Please enter marks per question' }]}
                     >
                         <InputNumber min={1} style={{ width: '100%' }} />
                     </Form.Item>
 
                     <Form.Item
                         name="numberOfQuestions"
-                        label="Number Of Questions"
-                        rules={[{ required: true, message: 'Enter number of questions' }]}
+                        label="Number of Questions"
+                        rules={[{ required: true, message: 'Please enter number of questions' }]}
                     >
                         <InputNumber min={1} style={{ width: '100%' }} />
                     </Form.Item>
-                </Form>
-            </Drawer>
 
-            <Drawer
-                title="New Configuration — Step 2: Select Question Group"
-                width={400}
-                onClose={handleGroupBack}
-                visible={groupDrawerVisible}
-                destroyOnClose
-                footer={(
-                    <div style={{ textAlign: 'right' }}>
-                        <Button onClick={handleGroupBack} style={{ marginRight: 8 }}>
-                            Back
-                        </Button>
-                        <Button type="primary" onClick={handleGroupSave}>
-                            Save
-                        </Button>
-                    </div>
-                )}
-            >
-                <Form form={groupForm} layout="vertical">
-                    <Form.Item
-                        name="questionGroupId"
-                        label="Question Group"
-                        rules={[{ required: true, message: 'Select a question group' }]}
-                    >
-                        <Select placeholder="Select a group">
-                            {questionGroups.map(g => (
-                                <Option key={g.id} value={g.id}>{g.name}</Option>
-                            ))}
-                        </Select>
+                    <Form.Item label="Select Question Group">
+                        <List
+                            dataSource={questionGroups}
+                            renderItem={g => (
+                                <List.Item
+                                    actions={[
+                                        <Button
+                                            type={selectedGroup?.id === g.id ? 'primary' : 'default'}
+                                            onClick={() => setSelectedGroup(g)}
+                                            key={g.id}
+                                        >
+                                            {selectedGroup?.id === g.id ? 'Selected' : 'Select'}
+                                        </Button>
+                                    ]}
+                                    key={g.id}
+                                >
+                                    <List.Item.Meta title={g.name} />
+                                </List.Item>
+                            )}
+                            style={{ maxHeight: 200, overflowY: 'auto' }}
+                        />
                     </Form.Item>
                 </Form>
             </Drawer>

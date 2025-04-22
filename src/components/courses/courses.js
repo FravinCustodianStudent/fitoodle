@@ -20,9 +20,10 @@ const Courses = withErrorBoundary(() =>{
     },[user,error]);
     const GetCourses=()=>{
         if (Object.keys(user).length!==0){
-            GET({studentId:user.id},"groupresource/groups/student",{Authorization:localStorage.getItem("jwt")})
+            GET({studentId:user.id},"userdataresource/groups/by-student",{})
                 .then((res)=>{
-                    GET({groupId:res.data.id},"courseresource/courses/by/group",{Authorization:localStorage.getItem("jwt")})
+                    console.log(res);
+                    GET({groupId:res.data.id},"courseresource/courses/by/group",{})
                         .then((result)=>{
                             setCourses(result.data)
                             console.log(Courses)
