@@ -286,6 +286,12 @@ const Assignment = () =>{
                                     <UploadOutlined style={{ fontSize: 24, marginRight: 8 }} />
                                     <Text strong>Ви надіслали завдання</Text>
                                 </div>
+                                {Mark?.comment && (
+                                    <div style={{ marginTop: 24, padding: 16, background: '#fafafa', borderRadius: 4 }}>
+                                        <Typography.Title level={5}>Коментар викладача</Typography.Title>
+                                        <Typography.Text>{Mark.comment}</Typography.Text>
+                                    </div>
+                                )}
                                 <Typography.Title level={5}>
                                     Ваші надіслані файли
                                 </Typography.Title>
