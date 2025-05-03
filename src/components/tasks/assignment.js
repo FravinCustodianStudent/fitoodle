@@ -12,25 +12,36 @@ import {useSelector} from "react-redux";
 import {useParams} from "react-router-dom";
 import {useEffect, useState} from "react";
 import {Oval} from "react-loader-spinner";
+import {Card, Upload, Button, Typography, message, Spin} from 'antd';
+import { UploadOutlined, ArrowRightOutlined } from '@ant-design/icons';
+
+const { Dragger } = Upload;
+const { Text } = Typography;
 const Assignment = () =>{
-    const {GET} = useHttp();
+    const {GET, FilePost, DELETE,PUT } = useHttp();
     const [Loading, setLoading] = useState(true)
     const user = useSelector(state => state.users.user);
     const {taskId} = useParams();
     const [Mark, setMark] = useState();
     const [TaskResult, setTaskResult] = useState();
     const [Task, setTask] = useState({});
+    const [LoadingFiles, setLoadingFiles] = useState(true);
+    const [TaskLoadingFiles, setTaskLoadingFiles] = useState(true);
+    const [Files, setFiles] = useState();
+    const [resultTaskFiles, setResultTaskFiles] = useState();
     useEffect(() => {
-        console.log(user)
         //TODO fix user bad request - see console
         if (user.length!==0){
-            GET({},`taskresource/tasks/${taskId}`,{Authorization:localStorage.getItem("jwt")})
+            console.log(user)
+            GET({},`taskresource/tasks/${taskId}`,{})
                 .then((res)=>{
                     setTask(res.data);
-                    GET({taskId:res.data.id,userId:user.id},`taskresource/taskResult/by/task/user`,{Authorization:localStorage.getItem("jwt")})
+                    const route = user.id;
+                    console.log(route);
+                    GET({taskId:taskId,userId:route},`taskresource/taskResult/by/task/user`,{})
                         .then((result)=>{
                             setTaskResult(result.data)
-                            GET({taskResultId:result.data.id},`taskresource/marks/by/testResult`,{Authorization:localStorage.getItem("jwt")})
+                            GET({taskResultId:result.data.id},`taskresource/marks/by/testResult`,{})
                                 .then((markRes)=>{
                                     setMark(markRes.data)
                                     setLoading(false);
@@ -43,6 +54,62 @@ const Assignment = () =>{
         }
 
     }, [user]);
+    useEffect(() => {
+        if (Task.attachedFiles?.length) {
+            const query = Task.attachedFiles.map(id => `files=${id}`).join('&');
+            setLoadingFiles(true);
+            GET({}, `fileresource/files/defined?${query}`, {})
+                .then(res => setFiles(res.data))
+                .catch(() => message.error('Failed to load file info'))
+                .finally(() => setLoadingFiles(false));
+        } else {
+            setFiles([]);
+            setLoadingFiles(false);
+        }
+    }, [Task]);
+    useEffect(() => {
+        if (TaskResult?.completed) {
+            const query = TaskResult.attachedFiles.map(id => `files=${id}`).join('&');
+            setTaskLoadingFiles(true);
+            GET({}, `fileresource/files/defined?${query}`, {})
+                .then(res => {
+                    setResultTaskFiles(res.data)
+                    setTaskLoadingFiles(false)
+                })
+                .catch(() => message.error('Failed to load file info'))
+                .finally(() => setLoadingFiles(false));
+        }
+    },[TaskResult])
+    const onSubmit = (idsOfFiles) => {
+        const nowIsoLocal = new Date()
+            .toISOString()        // "2025-05-02T22:51:07.829Z"
+            .split('.')[0];       // "2025-05-02T22:51:07"
+
+        const body = {
+            id:           TaskResult.id,
+            taskId:       TaskResult.taskId,
+            studentId:    TaskResult.studentId,
+            completed:    TaskResult.completed,      // keep false
+            completionTime: nowIsoLocal, // may be null or existing
+            attachedFiles: idsOfFiles
+        };
+        console.log(body)
+
+             PUT(
+                {}, `taskresource/taskResult`, {}, body
+            ).then((res)=>{
+                 message.success("Ваші файли успішно підтверджено");
+                 setTaskResult(res.data);
+                 }
+
+             ).catch(err=>{
+                 console.log(err)
+                 console.error(err);
+                 message.error("Не вдалося зберегти результат завдання");
+             })
+
+
+    };
 
     const ConvertDate = (date) =>{
         const [datePart, timePart] = date.split('T')
@@ -56,13 +123,104 @@ const Assignment = () =>{
     const renderFileForUpload = arr =>{
         console.log(arr)
         const items = arr.map(item => {
-            return <FileInfo fileId={item}/>;
+            return <FileInfo file={item}/>;
         })
-        console.log(items)
         return(
             items
         )
     }
+    const [fileList, setFileList] = useState([]);
+
+    // 3) configure Dragger
+    const uploadProps = {
+        multiple: false,
+        fileList,
+        beforeUpload: (file) => {
+            const isLt2M = file.size / 1024 / 1024 < 2;
+            if (!isLt2M) message.error('Файл має бути меншим за 2MB!');
+            return isLt2M;
+        },
+        customRequest: async ({ file, onProgress, onSuccess, onError }) => {
+            // add to list in “uploading” state
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // fake progress emitter
+            let pct = 0;
+            const fakeInt = setInterval(() => {
+                pct += 10;
+                onProgress({ percent: pct });
+                setFileList((prev) =>
+                    prev.map((f) =>
+                        f.uid === file.uid ? { ...f, percent: pct } : f
+                    )
+                );
+                if (pct >= 90) clearInterval(fakeInt);
+            }, 100);
+
+            try {
+                const res = await FilePost('fileresource/files', formData);
+                clearInterval(fakeInt);
+
+                setFileList((prev) =>
+                    prev.map((f) =>
+                        f.uid === file.uid
+                            ? {
+                                ...f,
+                                status: 'done',
+                                percent: 100,
+                                response: res.data
+                            }
+                            : f
+                    )
+                );
+                onSuccess(res.data, file);
+                message.success(`${file.name} успішно завантажено`);
+            } catch (err) {
+                clearInterval(fakeInt);
+                setFileList((prev) =>
+                    prev.map((f) =>
+                        f.uid === file.uid
+                            ? { ...f, status: 'error', percent: 100 }
+                            : f
+                    )
+                );
+                onError(err);
+                message.error(`Помилка завантаження ${file.name}`);
+            }
+        },
+        onChange({ fileList: newList }) {
+            setFileList(newList);
+        },
+        onRemove: async (file) => {
+            try {
+                await DELETE({}, `fileresource/files/${file.response.id}`, {});
+                setFileList((prev) =>
+                    prev.filter((f) => f.uid !== file.uid)
+                );
+                message.success(`${file.name} видалено`);
+            } catch {
+                message.error('Не вдалося видалити файл');
+            }
+        },
+        showUploadList: {
+            showRemoveIcon: true,
+            showPreviewIcon: false,
+            showDownloadIcon: false
+        },
+        onPreview: (file) => {
+            const url = file.response?.driveUrl || URL.createObjectURL(file.originFileObj);
+            window.open(url, '_blank');
+        }
+    };
+
+    // 4) when user clicks “Підтвердити”
+    const handleConfirm = () => {
+        // pass back the list of uploaded file IDs
+        const ids = fileList.map((f) => f.response?.id).filter(Boolean);
+        onSubmit(ids);
+    };
     return (
         <>
             {Loading ?<div className="oval__loader"><Oval
@@ -111,28 +269,78 @@ const Assignment = () =>{
                             </div>
                         </div>
                         <div className="assignment__main__description__task">
-                            {renderFileForUpload(Task.attachedFiles)}
+                            {LoadingFiles
+                                ? <Spin  tip="Завантаження файлів..." />
+                                : renderFileForUpload(Files)
+                            }
                         </div>
                     </div>
                     {/*TODO make form real not mock*/}
-                    <div className="assignment__main__upload">
-                        <div className="assignment__main__upload__header">
-                            <div className="assignment__main__upload__header__icon"><HandySvg src={uploadSrc}/></div>
-                            <div className="assignment__main__upload__header__name">task</div>
-                        </div>
-                        <div className="assignment__main__upload__files">
-                            <FileForCheck/>
-                        </div>
-                        <div className="assignment__main__upload__buttons">
-                            <div className="assignment__main__upload__buttons__upload">
-                                <HandySvg src={downoloadSrc}/>
-                                <div className="assignment__main__upload__buttons__upload__text">Завантажити файл</div>
-                            </div>
-                            <div className="assignment__main__upload__buttons__confirm">
-                                <HandySvg src={arrowSrc}/>
-                            </div>
-                        </div>
-                    </div>
+                    <Card bordered={false} style={{ maxWidth: 500 }}>
+                        {TaskResult?.completed ? (
+                            <>
+                                <div
+                                    className="separator"
+                                    style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}
+                                >
+                                    <UploadOutlined style={{ fontSize: 24, marginRight: 8 }} />
+                                    <Text strong>Ви надіслали завдання</Text>
+                                </div>
+                                <Typography.Title level={5}>
+                                    Ваші надіслані файли
+                                </Typography.Title>
+                                {TaskLoadingFiles
+                                    ? <Spin tip="Завантаження файлів..." />
+                                    : renderFileForUpload(resultTaskFiles)
+                                }
+                            </>
+                        ) : (
+                            <>
+                                <div
+                                    className="separator"
+                                    style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}
+                                >
+                                    <UploadOutlined style={{ fontSize: 24, marginRight: 8 }} />
+                                    <Text strong>Завдання</Text>
+                                </div>
+
+                                <Dragger {...uploadProps} style={{ padding: '24px 0' }}>
+                                    <p className="ant-upload-drag-icon">
+                                        <UploadOutlined />
+                                    </p>
+                                    <p className="ant-upload-text">
+                                        Перетягніть файл сюди або натисніть для вибору
+                                    </p>
+                                    <p className="ant-upload-hint">
+                                        Найбільший розмір файлу — 5 МБ
+                                    </p>
+                                </Dragger>
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
+                                    <Button
+                                        icon={<UploadOutlined />}
+                                        onClick={() => document.querySelector('.ant-upload input').click()}
+                                    >
+                                        Завантажити файл
+                                    </Button>
+
+                                    <Button
+                                        type="primary"
+                                        icon={<ArrowRightOutlined />}
+                                        disabled={!fileList.length}
+                                        onClick={() => {
+                                            const ids = fileList
+                                                .map(f => f.response?.id)
+                                                .filter(Boolean);
+                                            onSubmit(ids);
+                                        }}
+                                    >
+                                        Підтвердити
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </Card>
                 </div>
             </div>}
         </>

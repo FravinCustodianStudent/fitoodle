@@ -1,32 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Input,
-    List,
-    Button,
-    Table,
-    Drawer,
-    Form,
-    Select,
-    Checkbox,
-    Tooltip,
-    Typography,
-    Modal,
-    Skeleton,
-    Popover
+    Input, List, Button, Table, Drawer, Form, Checkbox,
+    Tooltip, Typography, Modal, Skeleton, Popover, message, Space, Flex, Divider
 } from 'antd';
 import {
-    FilterOutlined,
-    PlusOutlined,
-    EditOutlined
+    FilterOutlined, PlusOutlined, EditOutlined, SearchOutlined,
+    CalendarOutlined, BookOutlined, UserOutlined, LinkOutlined,
+    CheckCircleOutlined, ExperimentOutlined, ReloadOutlined, HddOutlined, NotificationOutlined, TeamOutlined
 } from '@ant-design/icons';
 import { format, startOfWeek, addDays } from 'date-fns';
-import {useHttp} from "../../../hooks/http.hook";
+import { useHttp } from '../../../hooks/http.hook';
 
-const { Option } = Select;
 const { Title } = Typography;
 
-// Fixed time slots for the schedule grid.
 const timeSlots = [
     { start: '9:00', end: '10:20' },
     { start: '10:30', end: '11:50' },
@@ -38,218 +25,218 @@ const timeSlots = [
 ];
 
 const LessonSchedule = () => {
-    const { GET } = useHttp();
+    const { GET, POST } = useHttp();
+
     const [groups, setGroups] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [tempSelectedGroup, setTempSelectedGroup] = useState(null);
     const [groupSearch, setGroupSearch] = useState('');
-
-    // State for filter parameters.
     const [filterParams, setFilterParams] = useState({});
 
-    // Function to fetch groups from the API with given filter parameters.
-    const fetchGroups = (params = {}) => {
-        GET(params, "userdataresource/groups", {})
-            .then(response => {
-                setGroups(response.data);
-            })
-            .catch(error => {
-                console.error("Error fetching groups", error);
-            });
-    };
-
-    // Initially fetch groups if no group is selected.
-    useEffect(() => {
-        if (!selectedGroup) {
-            fetchGroups({});
-        }
-    }, [selectedGroup, GET]);
-
-    // Apply local filtering on top of API filtering.
-    const filteredGroups = groups.filter((group) => {
-        const displayName = `${group.specNameShort} ${group.groupNumber} (${group.enterYear})`;
-        return displayName.toLowerCase().includes(groupSearch.toLowerCase());
-    });
-
-    // Compact filter form content inside a Popover.
-    const filterContent = (
-        <Form
-            layout="vertical"
-            onFinish={(values) => {
-                setFilterParams(values);
-                fetchGroups(values);
-            }}
-            initialValues={filterParams}
-        >
-            <Form.Item label="Год поступления" name="enterYear">
-                <Input type="number" placeholder="Год" />
-            </Form.Item>
-            <Form.Item label="Специальность" name="specNameShort">
-                <Input placeholder="Специальность" />
-            </Form.Item>
-            <Form.Item label="Номер группы" name="groupNumber">
-                <Input type="number" placeholder="Номер группы" />
-            </Form.Item>
-            <Form.Item name="active" valuePropName="checked" label="Активные группы">
-                <Checkbox />
-            </Form.Item>
-            <Form.Item>
-                <Button type="primary" htmlType="submit" size="small">
-                    Применить
-                </Button>
-                <Button
-                    style={{ marginLeft: 8 }}
-                    size="small"
-                    onClick={() => {
-                        setFilterParams({});
-                        fetchGroups({});
-                    }}
-                >
-                    Сбросить
-                </Button>
-            </Form.Item>
-        </Form>
-    );
-
-    // Schedule items now follow the new structure.
-    const [schedule, setSchedule] = useState([
-        {
-            id: '1',
-            eduItem: 'Web Development',
-            teacher: 'John Smith',
-            conferenceUrl: '',
-            practice: false,
-            shared: false,
-            // Example: if placed in the second row and second column, its timeSlot is:
-            timeSlot: 1 * 7 + 1,
-        },
-    ]);
+    const [schedule, setSchedule] = useState([]);
+    const [loadingSchedule, setLoadingSchedule] = useState(false);
 
     const [lessonDrawerVisible, setLessonDrawerVisible] = useState(false);
     const [selectedLesson, setSelectedLesson] = useState(null);
     const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+    const [selectedRowSlot, setSelectedRowSlot] = useState(null)
     const [form] = Form.useForm();
 
-    // Calculate week days for the schedule grid.
+    const [courses, setCourses] = useState([]);
+    const [courseSearch, setCourseSearch] = useState('');
+    const [courseDrawerVisible, setCourseDrawerVisible] = useState(false);
+
+    const fetchGroups = (params = {}) => {
+        GET(params, 'userdataresource/groups', {})
+            .then(res => {
+
+                setGroups(res.data)
+            })
+            .catch(console.error);
+    };
+
+    useEffect(() => { fetchGroups(); }, [GET]);
+
+    useEffect(() => {
+        if (selectedGroup) {
+            setLoadingSchedule(true);
+            GET({}, `scheduleresource/schedules/group/${selectedGroup.id}`, {})
+                .then(res => {
+                    const items = res.data.days.flatMap(day =>
+                        (day.lessons || []).map(lsn => ({ ...lsn, dayOfWeek: day.dayOfWeek }))
+                    );
+                    setSchedule(items);
+                })
+                .then(res => {
+                    GET({}, 'courseresource/courses/all', {})
+                        .then(res => setCourses(res.data))
+                        .catch(console.error);
+                })
+                .catch(console.error)
+                .finally(() => setLoadingSchedule(false));
+
+        }
+    }, [selectedGroup, GET]);
+
+
+    const filteredGroups = groups.filter(g => {
+        const name = `${g.specNameShort} ${g.groupNumber} (${g.enterYear})`;
+        return name.toLowerCase().includes(groupSearch.toLowerCase());
+    });
+
+    const filterContent = (
+        <Form
+            layout="vertical"
+            onFinish={vals => { setFilterParams(vals); fetchGroups(vals); }}
+            initialValues={filterParams}
+        >
+            <Form.Item label="Год поступления" name="enterYear">
+                <Input type="number" placeholder="Год" prefix={<CalendarOutlined />} />
+            </Form.Item>
+            <Form.Item label="Специальность" name="specNameShort">
+                <Input placeholder="Специальность" prefix={<BookOutlined />} />
+            </Form.Item>
+            <Form.Item label="Номер группы" name="groupNumber">
+                <Input type="number" placeholder="Номер группы" prefix={<ReloadOutlined />} />
+            </Form.Item>
+            <Form.Item name="active" valuePropName="checked" label="Активные группы">
+                <Checkbox><CheckCircleOutlined /> Активны</Checkbox>
+            </Form.Item>
+            <Form.Item>
+                <Space>
+                    <Button type="primary" htmlType="submit" size="small">Применить</Button>
+                    <Button size="small" onClick={() => { setFilterParams({}); fetchGroups({}); }}>Сбросить</Button>
+                </Space>
+            </Form.Item>
+        </Form>
+    );
+
     const today = new Date();
     const weekStart = startOfWeek(today);
-    const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
+    const weekDays = Array.from({ length: 5 }).map((_, i) => addDays(weekStart, i + 1));
 
-    // Prepare the data for the schedule table.
-    const dataSource = timeSlots.map((slot, rowIndex) => {
-        const row = { key: slot.start, time: `${slot.start} - ${slot.end}` };
-        weekDays.forEach((day, colIndex) => {
-            const cellTimeSlot = rowIndex * weekDays.length + colIndex;
-            const lesson = schedule.find(item => item.timeSlot === cellTimeSlot);
-            row[day.toDateString()] = lesson || null;
+    const dataSource = timeSlots.map((slot, rowIdx) => {
+        const row = { key: rowIdx, time: `${slot.start} - ${slot.end}`, slotIndex: rowIdx };
+        //console.log(row);
+        //console.log(schedule);
+        weekDays.forEach((day, colIdx) => {
+            row[day.toDateString()] =
+                schedule.find(item => item.timeSlot === rowIdx+1  && item.dayOfWeek === colIdx + 1) || null;
         });
         return row;
     });
 
-    // Build the table columns.
-    const columns = [
-        {
-            title: 'Время',
-            dataIndex: 'time',
-            key: 'time',
-            fixed: 'left',
-            width: 120,
-            render: text => <strong>{text}</strong>,
-        },
-        ...weekDays.map((day, colIndex) => ({
-            title: (
-                <div style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                    {format(day, 'EEEE')}
-                </div>
-            ),
-            dataIndex: day.toDateString(),
-            key: day.toDateString(),
-            render: (lesson, record, rowIndex) => {
-                const cellTimeSlot = rowIndex * weekDays.length + colIndex;
-                return lesson ? (
-                    <Tooltip title="Редактировать занятие">
-                        <motion.div
-                            onClick={() => openLessonDrawer(lesson, cellTimeSlot)}
-                            whileHover={{
-                                scale: 1.05,
-                                boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                                backgroundColor: 'rgb(43,45,66)',
-                                color: 'rgb(255,255,255)'
-                            }}
-                            transition={{ duration: 0.2 }}
-                            style={{
-                                border: '1px dashed rgba(0, 0, 0, 0.23)',
-                                backgroundColor: 'rgb(255,255,255)',
-                                color: 'rgb(0,0,0)',
-                                padding: '6px 12px',
-                                borderRadius: '4px',
-                                textAlign: 'center',
-                                cursor: 'pointer',
-                                margin: '4px'
-                            }}
-                        >
-                            <div>{lesson.eduItem}</div>
-                            <div style={{ fontSize: '12px' }}>Slot: {lesson.timeSlot}</div>
-                        </motion.div>
-                    </Tooltip>
-                ) : (
-                    <Tooltip title="Добавить занятие">
-                        <Button
-                            type="dashed"
-                            icon={<PlusOutlined />}
-                            onClick={() => openLessonDrawer(null, cellTimeSlot)}
-                        />
-                    </Tooltip>
-                );
-            },
-        })),
-    ];
-
-    // Opens the drawer to add or edit a lesson.
-    const openLessonDrawer = (lesson, cellTimeSlot) => {
+    const openLessonDrawer = (timeSlotIdx, lesson,collIdx) => {
+        setSelectedTimeSlot(timeSlotIdx);
+        setSelectedRowSlot(collIdx+1);
         setSelectedLesson(lesson);
-        setSelectedTimeSlot(cellTimeSlot);
-        if (lesson && lesson.id) {
-            form.setFieldsValue({
-                eduItem: lesson.eduItem,
-                teacher: lesson.teacher,
-                conferenceUrl: lesson.conferenceUrl,
-                type: lesson.practice ? 'practice' : 'lecture',
-                shared: lesson.shared,
-            });
-        } else {
-            form.resetFields();
-            form.setFieldsValue({
-                type: 'lecture',
-                shared: false,
-            });
-        }
+        form.resetFields();
+        if (lesson) form.setFieldsValue({
+            id: lesson.id,
+            eduItem: lesson.eduItem,
+            teacher: lesson.teacher,
+            conferenceUrl: lesson.conferenceUrl,
+            practice: lesson.practice,
+            shared: lesson.shared,
+            timeSlot: lesson.timeSlot
+        });
+        else form.setFieldsValue({ practice: false, shared: false, timeSlot: timeSlotIdx+1 });
         setLessonDrawerVisible(true);
     };
 
-    // Transform and update schedule on form submission.
-    const onLessonFinish = (values) => {
-        const newLesson = {
-            id: selectedLesson && selectedLesson.id ? selectedLesson.id : Math.random().toString(36).substr(2, 9),
-            eduItem: values.eduItem,
-            teacher: values.teacher,
-            conferenceUrl: values.conferenceUrl || '',
-            practice: values.type === 'practice',
-            shared: values.shared,
-            timeSlot: selectedTimeSlot,
-        };
-
-        if (selectedLesson && selectedLesson.id) {
-            setSchedule(schedule.map(item => item.id === selectedLesson.id ? newLesson : item));
-        } else {
-            setSchedule([...schedule, newLesson]);
-        }
-        setLessonDrawerVisible(false);
+    const onLessonFinish = values => {
+        const dayOfWeek = selectedRowSlot;
+        console.log(dayOfWeek);
+        POST(
+            {eduGroupId: selectedGroup.id,dayOfWeek:dayOfWeek},
+            'scheduleresource/schedules/lesson',
+            { },
+            {
+                id: values.id,
+                eduItem: values.eduItem,
+                teacher: values.teacher,
+                conferenceUrl: values.conferenceUrl,
+                practice: values.practice,
+                shared: values.shared,
+                timeSlot: values.timeSlot
+            }
+        )
+            .then(() => {
+                GET({}, `scheduleresource/schedules/group/${selectedGroup.id}`, {})
+                    .then(res => {
+                        setSchedule(res.data.days.flatMap(day =>
+                            (day.lessons || []).map(lsn => ({ ...lsn, dayOfWeek: day.dayOfWeek }))
+                        ))
+                        message.success('Lesson saved')
+                    })
+            })
+            .catch(() => message.error('Error on lesson creating'))
+            .finally(() => setLessonDrawerVisible(false));
     };
 
+    const filteredCourses = courses.filter(c => c.name.toLowerCase().includes(courseSearch.toLowerCase()));
+
+    const columns = [
+        { title: 'Time', dataIndex: 'time', key: 'time', fixed: 'left', width: 140, render: t => <><CalendarOutlined /> <strong>{t}</strong></> },
+        ...weekDays.map((day, colIdx) => ({
+            title: <strong>{format(day, 'EEEE')}</strong>,
+            dataIndex: day.toDateString(),
+            key: day.toDateString(),
+            render: (lesson, record) => {
+                const cellSlot = record.slotIndex;
+                const collId= colIdx ;
+                return lesson ? (
+                    <Tooltip title="Edit Lesson">
+                        <motion.div
+                            onClick={() => openLessonDrawer(cellSlot, lesson,collId)}
+                            whileHover={{
+                                scale: 1.02,
+                                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)'
+                            }}
+                            style={{
+                                padding: 12,
+                                marginBottom: 8,
+                                cursor: 'pointer',
+                                border: '1px solid #e8e8e8',
+                                borderRadius: 8,
+                                backgroundColor: '#ffffff',
+                                transition: '0.2s'
+                            }}
+                        >
+                            <Flex justify="center" vertical align="flex-start">
+                                <Space size="small">
+                                    <BookOutlined />
+                                    <Typography.Text strong>Course:</Typography.Text>
+                                    <Typography.Text>{lesson.eduItem}</Typography.Text>
+
+                                </Space>
+                                <Space size="small">
+                                    <UserOutlined />
+                                    <Typography.Text strong>Teacher:</Typography.Text>
+                                    <Typography.Text>{lesson.teacher}</Typography.Text>
+                                </Space>
+                                <Divider></Divider>
+                                <Space size="small">
+                                    <NotificationOutlined />
+                                    <Typography.Text>{lesson.practice ? 'Practice' : 'Lecture'}</Typography.Text>
+                                    <TeamOutlined style={{ marginLeft: 12 }} />
+                                    <Typography.Text>{lesson.shared ? 'Shared' : 'Private'}</Typography.Text>
+                                </Space>
+                            </Flex>
+                        </motion.div>
+                    </Tooltip>
+                ) : (
+                    <Tooltip title="Add Lesson">
+                        <Button type="dashed" icon={<PlusOutlined />} onClick={() => openLessonDrawer(cellSlot, null,collId)}></Button>
+                    </Tooltip>
+                );
+            }
+        })),
+    ];
+
     return (
-        <div style={{ width: '100%', padding: '24px 0' }}>
-            {!selectedGroup && <Skeleton active paragraph={{ rows: 5 }} />}
+        <div style={{ padding: 24,width: '100%' }}>
+            {!selectedGroup && <Skeleton active paragraph={{ rows: 6 }} />}
 
             <Modal
                 visible={!selectedGroup}
@@ -262,129 +249,124 @@ const LessonSchedule = () => {
                 <Input
                     placeholder="Поиск групп"
                     value={groupSearch}
-                    onChange={(e) => setGroupSearch(e.target.value)}
-                    suffix={
-                        <Popover placement={"right"} content={filterContent} title="Фильтр групп" trigger="click">
-                            <FilterOutlined style={{ cursor: 'pointer' }} />
-                        </Popover>
-                    }
+                    onChange={e => setGroupSearch(e.target.value)}
+                    suffix={<Popover content={filterContent} title="Фильтр групп"><FilterOutlined /></Popover>}
                 />
-
                 <List
                     style={{ marginTop: 12, maxHeight: 300, overflowY: 'auto' }}
                     bordered
                     dataSource={filteredGroups}
-                    renderItem={(group) => {
-                        const displayName = `${group.specNameShort} ${group.groupNumber} (${group.enterYear})`;
+                    renderItem={g => {
+                        const name = `${g.specNameShort} ${g.groupNumber} (${g.enterYear})`;
                         return (
                             <List.Item
-                                onClick={() => setTempSelectedGroup(group)}
-                                style={{
-                                    backgroundColor: tempSelectedGroup?.id === group.id ? '#e6f7ff' : 'transparent',
-                                    cursor: 'pointer'
-                                }}
+                                onClick={() => setTempSelectedGroup(g)}
+                                style={{ cursor: 'pointer', backgroundColor: tempSelectedGroup?.id === g.id ? '#e6f7ff' : undefined }}
                             >
-                                {displayName}
+                                <Space><UserOutlined />{name}</Space>
                             </List.Item>
                         );
                     }}
                 />
-                <div style={{ marginTop: 16, textAlign: 'right' }}>
+                <div style={{ textAlign: 'right', marginTop: 16 }}>
                     <Button
                         type="primary"
-                        onClick={() => {
-                            if (tempSelectedGroup) {
-                                setSelectedGroup(tempSelectedGroup);
-                            }
-                        }}
+                        icon={<ReloadOutlined />}
                         disabled={!tempSelectedGroup}
-                    >
-                        OK
-                    </Button>
+                        onClick={() => setSelectedGroup(tempSelectedGroup)}
+                    >OK</Button>
                 </div>
             </Modal>
 
             {selectedGroup && (
-                <>
-                    <div
-                        style={{
-                            marginBottom: 24,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
-                        }}
-                    >
-                        <Title level={2} style={{ margin: 0, color: '#2B2D42' }}>
-                            Расписание занятий для группы: {`${selectedGroup.specNameShort} ${selectedGroup.groupNumber} (${selectedGroup.enterYear})`}
-                        </Title>
-                        <Button
-                            icon={<EditOutlined />}
-                            onClick={() => {
-                                setSelectedGroup(null);
-                                setTempSelectedGroup(null);
-                            }}
-                        >
-                            Изменить группу
-                        </Button>
+                <div style={{ width:"100%" }}>
+                    <div style={{ width:"100%", display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                        <Title level={2}><HddOutlined />Schedule for {selectedGroup.specNameShort} {selectedGroup.groupNumber}</Title>
+                        <Button icon={<EditOutlined />} onClick={() => { setSelectedGroup(null); setTempSelectedGroup(null); }}>Change group</Button>
                     </div>
+
                     <Table
                         columns={columns}
                         dataSource={dataSource}
+                        loading={loadingSchedule}
                         pagination={false}
                         bordered
                         scroll={{ x: 'max-content' }}
                     />
+
                     <Drawer
-                        title={selectedLesson && selectedLesson.id ? 'Редактировать занятие' : 'Добавить занятие'}
-                        placement="right"
+                        title={<><EditOutlined /> {selectedLesson ? 'Edid schedule item' : 'Add schedule item'}</>}
                         width={400}
-                        onClose={() => setLessonDrawerVisible(false)}
                         visible={lessonDrawerVisible}
+                        onClose={() => setLessonDrawerVisible(false)}
+                        footer={<Button type="primary" onClick={() => form.submit()}><CheckCircleOutlined /> {selectedLesson ? 'Update' : 'Add'}</Button>}
                     >
-                        <Form
-                            layout="vertical"
-                            form={form}
-                            onFinish={onLessonFinish}
-                            initialValues={{
-                                type: 'lecture',
-                                shared: false,
-                            }}
-                        >
-                            <Form.Item
-                                label="Название занятия"
-                                name="eduItem"
-                                rules={[{ required: true, message: 'Введите название занятия!' }]}
-                            >
-                                <Input placeholder="Название занятия" />
-                            </Form.Item>
-                            <Form.Item
-                                label="Преподаватель"
-                                name="teacher"
-                                rules={[{ required: true, message: 'Введите имя преподавателя!' }]}
-                            >
-                                <Input placeholder="Имя преподавателя" />
-                            </Form.Item>
-                            <Form.Item label="Тип занятия" name="type">
-                                <Select>
-                                    <Option value="lecture">Лекция</Option>
-                                    <Option value="practice">Практика</Option>
-                                    <Option value="consultation">Консультация</Option>
-                                </Select>
-                            </Form.Item>
-                            <Form.Item label="Ссылка на конференцию" name="conferenceUrl">
-                                <Input placeholder="URL конференции" />
-                            </Form.Item>
-                            <Form.Item name="shared" valuePropName="checked">
-                                <Checkbox>Доступно всем</Checkbox>
-                            </Form.Item>
-                            <Form.Item>
-                                <Button type="primary" htmlType="submit" style={{ marginRight: 8 }}>
-                                    {selectedLesson && selectedLesson.id ? 'Обновить' : 'Добавить'}
-                                </Button>
-                            </Form.Item>
-                        </Form>
+                        <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 30 }}>
+                            <Form form={form} layout="vertical" onFinish={onLessonFinish} initialValues={{ practice: false, shared: false }}>
+                                <Form.Item name="id" hidden><Input /></Form.Item>
+
+                                <Form.Item label="Education Course" name="eduItem" rules={[{ required: true }]}>
+                                    <Input
+                                        readOnly
+                                        placeholder="Select Course"
+                                        onClick={() => setCourseDrawerVisible(true)}
+                                        suffix={<SearchOutlined style={{ cursor: 'pointer' }} />}
+                                    />
+                                </Form.Item>
+
+                                <Form.Item label="Teacher" name="teacher">
+                                    <Input prefix={<UserOutlined />} placeholder="Input Teacher Name" />
+                                </Form.Item>
+
+                                <Form.Item label="Link to conference" name="conferenceUrl">
+                                    <Input prefix={<LinkOutlined />} placeholder="https://conference.com/j/123" />
+                                </Form.Item>
+
+                                <Form.Item name="practice" valuePropName="checked">
+                                    <Checkbox><ExperimentOutlined /> Practic</Checkbox>
+                                </Form.Item>
+
+                                <Form.Item name="shared" valuePropName="checked">
+                                    <Checkbox><CheckCircleOutlined /> Shared</Checkbox>
+                                </Form.Item>
+
+                                <Form.Item name="timeSlot" hidden>
+                                    <Input />
+                                </Form.Item>
+                            </Form>
+                        </motion.div>
                     </Drawer>
-                </>
+
+                    <Drawer
+                        title={<><BookOutlined /> Choose course</>}
+                        width={360}
+                        visible={courseDrawerVisible}
+                        onClose={() => setCourseDrawerVisible(false)}
+                    >
+                        <Input
+                            placeholder="Search course"
+                            value={courseSearch}
+                            onChange={e => setCourseSearch(e.target.value)}
+                            suffix={<SearchOutlined />}
+                            style={{ marginBottom: 12 }}
+                        />
+                        <List
+                            bordered
+                            dataSource={filteredCourses}
+                            renderItem={c => (
+                                <List.Item
+                                    onClick={() => { form.setFieldsValue({ eduItem: c.name}); setCourseDrawerVisible(false); }}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <List.Item.Meta
+                                        avatar={<BookOutlined />}
+                                        title={c.name}
+                                    />
+                                </List.Item>
+                            )}
+                        />
+                    </Drawer>
+                </div>
             )}
         </div>
     );

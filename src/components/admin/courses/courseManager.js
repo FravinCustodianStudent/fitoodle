@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import {
     Layout,
     List,
@@ -15,7 +16,7 @@ import {
     Modal,
     message,
     Row,
-    Col,
+    Col, Spin, Tag, Table, Avatar
 } from 'antd';
 import {
     FilterOutlined,
@@ -27,7 +28,7 @@ import {
     BookOutlined,
     UserOutlined,
     IdcardOutlined,
-    SmileOutlined,
+    SmileOutlined, EditOutlined, EyeOutlined, DeleteOutlined, CloseCircleOutlined, CheckCircleOutlined, CalendarOutlined,CommentOutlined
 } from '@ant-design/icons';
 import { useHttp } from '../../../hooks/http.hook';
 import {useNavigate, useSearchParams} from "react-router-dom";
@@ -462,9 +463,13 @@ const CreateCourseDrawer = ({ visible, onClose, onCreate }) => {
  * The right panel displays details about the selected course.
  */
 const CourseManagerPage = () => {
-    const { GET, PUT } = useHttp();
+    const { GET, PUT, DELETE } = useHttp();
     const [teacherName, setTeacherName] = useState('');
     const [fetchedGroups, setFetchedGroups] = useState([]);
+    const [viewModalVisible, setViewModalVisible] = useState(false);
+    const [viewLoading, setViewLoading] = useState(false);
+    const [viewResults, setViewResults] = useState([]);
+    const [teacherMap, setTeacherMap] = useState({});
     const [courseFilters, setCourseFilters] = useState({
         enterYear: undefined,
         specNameShort: '',
@@ -472,6 +477,7 @@ const CourseManagerPage = () => {
         active: true,
     });
     const navigate = useNavigate();
+    const [courseItems, setCourseItems] = useState({ tests: [], tasks: [] });
     const [availableCourses, setAvailableCourses] = useState([]);
     const [loadingCourses, setLoadingCourses] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState(null);
@@ -482,8 +488,22 @@ const CourseManagerPage = () => {
     const fetchCourses = (filters) => {
         setLoadingCourses(true);
         GET({}, 'courseresource/courses/all', filters)
-            .then((res) => {setAvailableCourses(res.data)
+            .then((res) => {
+                setAvailableCourses(res.data)
             if (searchParams.get('courseId')) setSelectedCourse(res.data.find(a=>a.id === searchParams.get('courseId')));
+                const ids = Array.from(new Set(res.data.map(c => c.teacherId).filter(Boolean)));
+                if (ids.length) {
+                    const q = ids.map(id => `ids=${id}`).join('&');
+                    GET({}, `userdataresource/users/by-ids?${q}`, {})
+                        .then(usersRes => {
+                            const map = {};
+                            usersRes.data.forEach(u => {
+                                map[u.id] = `${u.firstName} ${u.lastName}`;
+                            });
+                            setTeacherMap(map);
+                        })
+                        .catch(() => message.error('Failed to load teacher names'));
+                }
             })
             .catch(() => message.error('Failed to fetch courses'))
             .finally(() => setLoadingCourses(false));
@@ -493,27 +513,51 @@ const CourseManagerPage = () => {
         fetchCourses(courseFilters);
     }, [courseFilters, GET]);
 
-    // When selectedCourse changes, fetch teacher info and linked group details.
+    // 2) When you select a course, fetch teacher info, groups, and tasks/tests
     useEffect(() => {
-        if (selectedCourse && selectedCourse.teacherId) {
+        if (!selectedCourse) return;
+
+        // reflect in URL
+        setSearchParams({ courseId: selectedCourse.id });
+
+        // a) teacher
+        if (selectedCourse.teacherId) {
             GET({}, `userdataresource/users/${selectedCourse.teacherId}`, {})
-                .then((res) => {
-                    const user = res.data;
-                    setTeacherName(`${user.firstName} ${user.lastName}`);
-                })
+                .then((res) =>
+                    setTeacherName(`${res.data.firstName} ${res.data.lastName}`)
+                )
                 .catch(() => message.error('Failed to fetch teacher info'));
         } else {
             setTeacherName('');
         }
-        if (selectedCourse && selectedCourse.targetGroups && selectedCourse.targetGroups.length > 0) {
-            const query = selectedCourse.targetGroups.map((id) => `ids=${id}`).join('&');
+
+        // b) linked groups
+        if (selectedCourse.targetGroups?.length) {
+            const query = selectedCourse.targetGroups
+                .map((id) => `ids=${id}`)
+                .join('&');
             GET({}, `userdataresource/groups/by-ids?${query}`, {})
                 .then((res) => setFetchedGroups(res.data))
                 .catch(() => message.error('Failed to fetch group details'));
         } else {
             setFetchedGroups([]);
         }
-    }, [selectedCourse, GET]);
+
+        // c) tasks/tests
+        GET(
+            {eduCourseId: selectedCourse.id},
+            'taskresource/tasks/by/course',
+            {  }
+        )
+            .then((res) => {
+                const all = res.data;
+                setCourseItems({
+                    tests: all.filter((item) => item.testId),
+                    tasks: all.filter((item) => !item.testId),
+                });
+            })
+            .catch(() => message.error('Failed to fetch tests & tasks'));
+    }, [selectedCourse]);
 
     // Filter form inside a popover for courses
     const courseFilterContent = (
@@ -548,29 +592,171 @@ const CourseManagerPage = () => {
             </Form.Item>
         </Form>
     );
+    // 3) Handlers for View / Edit / Delete
+    const handleView = item => {
+        if (!item.testId) {
+            navigate(`/admin/tasks/${item.id}/results`);
+            return;
+        }
+
+        setViewModalVisible(true);
+        setViewLoading(true);
+
+        // 1) fetch taskResults
+        GET({ taskId: item.id }, 'taskresource/taskResult/by/task', {})
+            .then(res => res.data)
+            .then(results =>
+                // 2) get marks for each
+                Promise.all(results.map(r =>
+                    GET({ taskResultId: r.id }, 'taskresource/marks/by/testResult', {})
+                        .then(markRes => ({
+                            ...r,
+                            markValue: markRes.data.markValue,
+                            comment:   markRes.data.comment,
+                        }))
+                ))
+            )
+            .then(resultsWithMarks => {
+                // 3) collect unique studentIds
+                const studentIds = Array.from(new Set(resultsWithMarks.map(r => r.studentId)));
+                // 4) fetch user details
+                const query = studentIds.map(id => `ids=${id}`).join('&');
+                //made
+                return GET({}, `userdataresource/users/by-ids?${query}`, {})
+                    .then(usersRes => ({
+                        resultsWithMarks,
+                        users: usersRes.data,
+                    }));
+            })
+            .then(({ resultsWithMarks, users }) => {
+                // 5) merge user info into each result
+                const finalResults = resultsWithMarks.map(r => ({
+                    ...r,
+                    user: users.find(u => u.id === r.studentId),
+                }));
+                setViewResults(finalResults);
+            })
+            .catch(() => message.error('Failed to load test results'))
+            .finally(() => setViewLoading(false));
+    };
+
+    const handleEdit = (item) => {
+        if (item.testId) {
+            navigate(`/admin/questions/${item.testId}`); // or your test-edit route
+        } else {
+            navigate(`/admin/tasks/${item.id}`); // or your task-edit route
+        }
+    };
+    const handleDelete = (item) => {
+        Modal.confirm({
+            title: `Delete ${item.testId ? 'test' : 'task'} "${item.name}"?`,
+            onOk: () => {
+                DELETE(
+                    {},
+                    `taskresource/tasks/${item.id}`,
+                    {}
+                )
+                    .then(() => {
+                        message.success('Deleted successfully');
+                        // refetch tasks/tests
+                        return GET(
+                            {},
+                            'taskresource/tasks/by/course',
+                            { eduCourseId: selectedCourse.id }
+                        );
+                    })
+                    .then((res) => {
+                        const all = res.data;
+                        setCourseItems({
+                            tests: all.filter((i) => i.testId),
+                            tasks: all.filter((i) => !i.testId),
+                        });
+                    })
+                    .catch(() => message.error('Failed to delete'));
+            },
+        });
+    };
+    const itemVariants = {
+        unselected: {
+            "&::before":{
+
+            },
+            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+        },
+        selected: {
+            paddingLeft:"10px"
+        },
+    };
     // Render courses list in left sidebar
     const renderCourseList = () => (
         <List
             loading={loadingCourses}
             dataSource={availableCourses}
-            renderItem={(course) => (
-                <List.Item
+            itemLayout="vertical"
+            renderItem={course => {
+                const isSel = selectedCourse?.id === course.id;
+                const teacherName = teacherMap[course.teacherId] || '—';
+                return (<motion.div
+                    key={course.id}
+                    variants={itemVariants}
+                    initial="unselected"
+                    animate={isSel ? 'selected' : 'unselected'}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.2 }}
                     onClick={() => {
-                        setSelectedCourse(course)
-                        console.log(course.id)
-                        setSearchParams({'courseId':course.id})
-                    } }
+                        setSelectedCourse(course);
+                        setSearchParams({ courseId: course.id });
+                    }}
                     style={{
+                        position: 'relative',
+                        borderRadius: 8,
+                        marginBottom: 12,
                         cursor: 'pointer',
-                        padding: 12,
-                        background: selectedCourse?.id === course.id ? '#f0f2f5' : '#fff',
-                        marginBottom: 8,
-                        borderRadius: 4,
                     }}
                 >
-                    <List.Item.Meta title={course.name} description={`Teacher: ${course.teacherId}`} />
-                </List.Item>
-            )}
+                    {/* left bar animating in/out */}
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: isSel ? 12 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        style={{
+                            position: 'absolute',
+                            left: 0, top: 0,
+                            height: '100%',
+                            background: '#2B2D42',
+                            borderRadius: '8px 0 0 8px',
+                        }}
+                    />
+
+                    <List.Item
+                        style={{ padding: 16, background: 'transparent', boxShadow: 'none' }}
+                    >
+                        <List.Item.Meta
+                            avatar={
+                                <Avatar
+                                    icon={<BookOutlined />}
+                                    size={52}
+                                />
+                            }
+                            title={
+                                <span style={{ fontSize: 16, fontWeight: 600 }}>
+                  <BookOutlined style={{ marginRight: 8}} />
+                                    {course.name}
+                </span>
+                            }
+                            description={
+                                <>
+
+                                    <div>
+                                        <UserOutlined style={{ marginRight: 4 }} />
+                                        Teacher: {teacherName}
+                                    </div>
+                                </>
+                            }
+                        />
+                    </List.Item>
+                </motion.div>);
+            }}
         />
     );
 
@@ -662,16 +848,22 @@ const CourseManagerPage = () => {
                     <div style={{ padding: 24 }}>
                         <div style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: 4, padding: 16 }}>
                             <List
-                                dataSource={selectedCourse.tests || []}
-                                renderItem={(test) => (
-                                    <List.Item style={{ padding: 12, borderBottom: '1px solid #f0f0f0' }} actions={[<Button type="link" className="red-icon">Select</Button>]}>
-                                        <div>
-                                            <div style={{ fontWeight: 'bold' }}>{test.title}</div>
-                                            <div style={{ fontSize: 12, color: '#555' }}>{test.description}</div>
-                                        </div>
-                                    </List.Item>
+                                        dataSource={courseItems.tests}
+                                        renderItem={test => (
+                                          <List.Item
+                                            actions={[
+                                              <Button icon={<EyeOutlined />}   onClick={() => handleView(test)}   />,
+                                          <Button icon={<EditOutlined />}  onClick={() => handleEdit(test)}   />,
+                                          <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(test)} />,
+                                        ]}
+                                      >
+                                        <List.Item.Meta
+                                          title={test.name}
+                                          description={test.description}
+                                       />
+                                      </List.Item>
                                 )}
-                            />
+                             />
                         </div>
                         <Button
                             icon={<PlusCircleOutlined className="red-icon" />}
@@ -699,16 +891,22 @@ const CourseManagerPage = () => {
                     <div style={{ padding: 24 }}>
                         <div style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: 4, padding: 16 }}>
                             <List
-                                dataSource={selectedCourse.tasks || []}
-                                renderItem={(task) => (
-                                    <List.Item style={{ padding: 12, borderBottom: '1px solid #f0f0f0' }} actions={[<Button type="link" className="red-icon">Select</Button>]}>
-                                        <div>
-                                            <div style={{ fontWeight: 'bold' }}>{task.title}</div>
-                                            <div style={{ fontSize: 12, color: '#555' }}>{task.description}</div>
-                                        </div>
-                                    </List.Item>
+                                        dataSource={courseItems.tasks}
+                                      renderItem={task => (
+                                         <List.Item
+                                           actions={[
+                                             <Button icon={<EyeOutlined />}   onClick={() => handleView(task)}   />,
+                                         <Button icon={<EditOutlined />}  onClick={() => handleEdit(task)}   />,
+                                         <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(task)} />,
+                                       ]}
+                                      >
+                                        <List.Item.Meta
+                                          title={task.name}
+                                          description={task.description}
+                                        />
+                                      </List.Item>
                                 )}
-                            />
+                              />
                         </div>
                         <Button
                             icon={<PlusCircleOutlined className="red-icon" />}
@@ -725,11 +923,71 @@ const CourseManagerPage = () => {
             </Tabs>
         );
     };
+    const resultColumns = [
+        {
+            title: 'Student',
+            dataIndex: 'user',
+            key: 'user',
+            render: user =>
+                user
+                    ? (
+                        <span>
+            <Avatar src={user.imageUrl} style={{ marginRight: 8 }} />
+                            {`${user.firstName} ${user.lastName}`}
+          </span>
+                    )
+                    : '-'
+        },
+        {
+            title: 'Completed',
+            dataIndex: 'completed',
+            key: 'completed',
+            render: done =>
+                done
+                    ? <Tag icon={<CheckCircleOutlined />} color="success">Yes</Tag>
+                    : <Tag icon={<CloseCircleOutlined />} color="error">No</Tag>
+        },
+        {
+            title: 'Completion Time',
+            dataIndex: 'completionTime',
+            key: 'completionTime',
+            render: t => t
+                ? <span><CalendarOutlined style={{ marginRight: 4 }} />{new Date(t).toLocaleString()}</span>
+                : '-'
+        },
+        {
+            title: 'Mark',
+            dataIndex: 'markValue',
+            key: 'markValue',
+            render: (markValue, record) =>{
+                return (
+
+                    record.completed?
+                        <Tag
+                            icon={<CheckCircleOutlined />}
+                            color={'#2B2D42'}>
+                            {markValue}</Tag>:
+                        <Tag
+                            icon={<CloseCircleOutlined />}
+                            color={'red'}>
+                            {markValue}</Tag>
+
+                )
+            }
+        },
+        {
+            title: 'Comment',
+            dataIndex: 'comment',
+            key: 'comment',
+            render: c => <span><CommentOutlined style={{ marginRight: 4 }} />{c}</span>
+        },
+    ];
+
 
     return (
-        <Layout style={{ height: '100vh', width: '100vw' }}>
+        <Layout style={{ height: '100vh', width: '100vw',backgroundColor: '#fff',marginTop: '1rem' }}>
             {/* Left Sidebar: Courses List and Filter */}
-            <Sider style={{ background: '#fff', padding: 16, overflowY: 'auto' }} width={300}>
+            <Sider style={{ background: '#fff', padding: 16, overflowY: 'auto' }} width={500}>
                 <div
                     style={{
                         marginBottom: 16,
@@ -738,7 +996,7 @@ const CourseManagerPage = () => {
                         alignItems: 'center',
                     }}
                 >
-                    <h3>Courses</h3>
+                    <h3 style={{margin:0}}>Courses</h3>
                     <div>
                         <Popover content={courseFilterContent} trigger="click">
                             <Button icon={<FilterOutlined />} />
@@ -788,6 +1046,27 @@ const CourseManagerPage = () => {
                     onUpdate={handleUpdateCourseGroups}
                 />
             )}
+            <Modal
+                visible={viewModalVisible}
+                title="Test Results"
+                onCancel={() => setViewModalVisible(false)}
+                footer={null}
+                width={1200}
+            >
+                {viewLoading ? (
+                    <div style={{ textAlign: 'center', padding: 50 }}>
+                        <Spin size="large" />
+                    </div>
+                ) : (
+                    <Table
+                        rowKey="id"
+                        dataSource={viewResults}
+                        columns={resultColumns}
+                        bordered
+                        pagination={false}
+                    />
+                )}
+            </Modal>
         </Layout>
     );
 };

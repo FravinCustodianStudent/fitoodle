@@ -92,7 +92,7 @@ const CreateTaskDrawer = ({
 
     const handleFinish = (values) => {
         const payload = {
-            id: editingTask ? editingTask.id : Date.now().toString(),
+            id: editingTask ? editingTask.id : null,
             name: values.name,
             authorId: currentUser.id,
             eduCourseId: selectedCourse?.id,

@@ -15,6 +15,7 @@ const testSlice = createSlice(
         reducers:{
             loadTestConfig:(state, action) =>{
                 state.testConfig = action.payload;
+                console.log(state.testConfig);
             },
             loadQuestions:(state, action) =>{
                 state.tests = action.payload;

@@ -7,6 +7,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
 import Select from "react-select";
 import AdminGroupItem from "./adminGroupItem";
+import {message} from "antd";
 
 /* ======================================================
    CreateGroupModal Component (Modal for Creating Groups)
@@ -34,6 +35,7 @@ const modalSchema = yup.object().shape({
 });
 
 const CreateGroupModal = ({ isOpen, onClose, onSubmit, users }) => {
+    const [message, contextHolder] = message.useMessage();
     const {
         register,
         handleSubmit,
@@ -175,12 +177,15 @@ const AdminGroups = () => {
         POST(
             {},
             "groupresource/groups",
-            { Authorization: localStorage.getItem("jwt") },
+            {},
             payload
         ).then(res => {
             setGroups([...Groups, res.data]);
+
+
+            setModalOpen(false);
         });
-        setModalOpen(false);
+
     };
 
     // Handler for link click to open modal.

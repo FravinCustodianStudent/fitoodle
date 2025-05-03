@@ -1,12 +1,15 @@
 import {HandySvg} from "handy-svg";
 import timerSrc from "../../assets/timer.svg";
 import "./testPage.scss";
+
 import QuestionItem from "./questionItem/questionItem";
 import questionSrc from "../../assets/question.svg";
 import DescrItem from "./descItem/descrItem";
 import arrowtSrc from "../../assets/arrow.svg";
 import ResultItem from "./questionItem/resultItem";
+import {Collapse, Descriptions, Divider, Typography} from 'antd'
 import CircularResult from "./circular result/circularResult";
+
 import {useEffect, useState} from "react";
 import {useDispatch, useSelector} from "react-redux";
 import {useParams, useSearchParams} from "react-router-dom";
@@ -14,6 +17,8 @@ import {useHttp} from "../../hooks/http.hook";
 import {addAnswer, loadQuestions, loadTestConfig, modifyAnswerById, setTime} from "../../slices/testSlice";
 import {Oval} from "react-loader-spinner";
 import { Image } from 'antd';
+const { Panel } = Collapse
+const { Title, Text, Link } = Typography
 const TestPage = () =>{
     const [typeOfElement, setTypeOfElement] = useState("s");
     const dispatch = useDispatch();
@@ -101,9 +106,9 @@ const TestPage = () =>{
                     questionId: tests.questions[currentQuestion - 1].id,
                     answersId: [...answer]
                 }
-                dispatch(addAnswer(answerObject));
-                    setAnswer([]);
-                    loadAnswer(numberOfNextQuestion);
+                 dispatch(addAnswer(answerObject));
+                setAnswer([])
+                    loadAnswer(numberOfNextQuestion,answerObject);
             }else if(answers.find(obj=> obj.questionId ===tests.questions[currentQuestion-1].id)){
                 const answerToUpdate = answers.find(obj=> obj.questionId ===tests.questions[currentQuestion-1].id);
                 const updatedAnswer = {
@@ -131,15 +136,17 @@ const TestPage = () =>{
         const milliseconds = String(currentDate.getMilliseconds()).padStart(3, '0');
         return `${year}-${month}-${date}T${hours}:${minutes}:${seconds}.${milliseconds}Z`;
     }
-    const calculateResult=()=>{
+    const calculateResult=(answerObject)=>{
         setLoading(true);
         setTypeOfElement("results");
+        //TODO fix this kostil
+        const answersToSend = [...answers,answerObject];
         const objectToCheck = {
             id:tests.id,
             started:true,
             startTime:formatdDate(startTime),
             completionTime:formatdDate(new Date()),
-            answers:answers,
+            answers:answersToSend,
             completed:true,
             testMarkValue:testConfig.maxTestMark
         }
@@ -147,7 +154,7 @@ const TestPage = () =>{
         POST({},`testingresource/tests/${tests.id}/complete`,{},objectToCheck)
             .then((res)=>{
                 console.log(res)
-                setTestResult(res.data.testResult);
+                setTestResult(res.data);
                 setLoading(false);
 
             })
@@ -155,9 +162,9 @@ const TestPage = () =>{
                 console.log(err)
             })
     }
-    const loadAnswer =  (numberOfAnswer) =>{
+    const loadAnswer =  (numberOfAnswer,answerObject) =>{
             if (numberOfAnswer > tests.questions.length) {
-                calculateResult();
+                calculateResult(answerObject);
                 return;
             }
             const newAnswers = answers.find(obj=> obj.questionId ===tests.questions[numberOfAnswer-1].id);
@@ -180,48 +187,106 @@ const TestPage = () =>{
     }
     const containerSwitcher = (typeOfElement) =>{
         switch (typeOfElement){
-            case "results":
-                return <>
-                    <div className="question__header">
-                        <div className="question__header__timer test__results">
-                            <div className="question__header__timer__name">
-                                <div className="question__header__timer__name__icon">
-
+            case 'results':
+                return (
+                    <>
+                        <div className="question__header">
+                            <div className="question__header__timer test__results">
+                                <div className="question__header__timer__name">
+                                    <div className="question__header__timer__name__icon" />
+                                    <div className="question__header__timer__name__content">Результат</div>
                                 </div>
-                                <div className="question__header__timer__name__content">
-                                    Результат
-
+                                <div className="question__header__timer__content">
+                                    <HandySvg src={timerSrc} />
                                 </div>
-                            </div>
-                            <div className="question__header__timer__content">
-                                <HandySvg src={timerSrc}/>
                             </div>
                         </div>
 
-                    </div>
-                    <div className="question__main">
-                        <div className="question__main__info">
-                            <div className="question__main__info__header">
-                                <div className="question__main__info__header__content">
-                                    <div className="question__main__info__header__content__icon">
-                                        <HandySvg src={questionSrc}/>
+                        <div className="question__main">
+                            <div className="question__main__info">
+                                <div className="question__main__info__header">
+                                    <div className="question__main__info__header__content">
+                                        <div className="question__main__info__header__content__icon">
+                                            <HandySvg src={questionSrc} />
+                                        </div>
+                                        <div className="question__main__info__header__content__name">
+                                            Деталі тесту
+                                        </div>
                                     </div>
-                                    <div className="question__main__info__header__content__name">
-                                        Результат {(testResult.testMarkValue).toString().substring(0,4) + " бала"}
+                                    <div className="question__main__info__header__description">
+
+                                        <div className="question__main__summary">
+                                            <Descriptions column={2} bordered>
+                                                <Descriptions.Item label="ID тесту">{testResult.testResult.id}</Descriptions.Item>
+                                                <Descriptions.Item label="Час завершення">
+                                                    {new Date(testResult.testResult.completionTime).toLocaleString()}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="Набрано балів">
+                                                    {testResult.testResult.testMarkValue} / {testConfig.maxTestMark}
+                                                </Descriptions.Item>
+                                                <Descriptions.Item label="Процентний результат">
+                                                    {Math.round((testResult.testResult.testMarkValue / testConfig.maxTestMark) * 100)}%
+                                                </Descriptions.Item>
+                                            </Descriptions>
+                                        </div>
+
+                                        <Divider />
+
+                                        <Collapse accordion>
+                                            {testResult.questions.map((q) => {
+                                                const userAnswer = answers.find((a) => a.questionId === q.id)
+                                                const selectedIds = userAnswer?.answersId || []
+                                                const selectedTexts = q.answers
+                                                    .filter((ans) => selectedIds.includes(ans.id))
+                                                    .map((ans) => ans.text)
+                                                    .join(', ')
+
+                                                return (
+                                                    <Panel header={<Text strong>{q.questionText}</Text>} key={q.id}>
+                                                        <Descriptions column={1} bordered size="small">
+                                                            <Descriptions.Item label={<Text>Ваш відповідь</Text>}>
+                                                                {selectedTexts || 'Не відповіли'}
+                                                            </Descriptions.Item>
+
+                                                            {q.attachmentUrl && (
+                                                                <Descriptions.Item label="Файл питання">
+                                                                    <Link href={q.attachmentUrl} target="_blank">
+                                                                        Завантажити
+                                                                    </Link>
+                                                                </Descriptions.Item>
+                                                            )}
+
+                                                            {q.answers.map((ans) =>
+                                                                selectedIds.includes(ans.id) && ans.attachmentUrl ? (
+                                                                    <Descriptions.Item key={ans.id} label="Вкладення відповіді">
+                                                                        <Link href={ans.attachmentUrl} target="_blank">
+                                                                            Завантажити
+                                                                        </Link>
+                                                                    </Descriptions.Item>
+                                                                ) : null
+                                                            )}
+                                                        </Descriptions>
+                                                    </Panel>
+                                                )
+                                            })}
+                                        </Collapse>
                                     </div>
-                                </div>
-                                <div className="question__main__info__header__description">
-                                    {testConfig.description}
+
                                 </div>
 
                             </div>
+
+                            <div className="question__main__result">
+                                <CircularResult
+                                    value={Math.round((testResult.testResult.testMarkValue / testConfig.maxTestMark) * 100)}
+                                />
+                            </div>
                         </div>
-                        <div className="question__main__result">
-                            <CircularResult value={Math.round((testResult.testMarkValue/testConfig.maxTestMark)*100)}/>
-                        </div>
-                    </div>
-                    </>;
-                break;
+
+
+                    </>
+                )
+            break;
             default :
                 return <>
                     <div className="question__header">

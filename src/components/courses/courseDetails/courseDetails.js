@@ -36,6 +36,7 @@ const CourseDetails = withErrorBoundary(() =>{
 
                         GET({eduCourseId:res.data.id},"taskresource/tasks/by/course",{Authorization:localStorage.getItem("jwt")})
                             .then((spacite)=>{
+                                console.log(spacite)
                                     setTasks(spacite.data);
                                     GET({},`taskresource/taskResult/by/user?userId=${user.id}`,{Authorization:localStorage.getItem("jwt")})
                                         .then((taskResuslts)=>{

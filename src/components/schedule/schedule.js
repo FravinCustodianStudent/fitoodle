@@ -1,194 +1,158 @@
 import "./schedule.scss";
-import infoSrc from "../../assets/info.svg";
-import {HandySvg} from "handy-svg";
+import { useHttp } from "../../hooks/http.hook";
+import { useEffect, useState } from "react";
+import { Oval } from "react-loader-spinner";
 import DayDate from "./date/dayDate";
 import ScheduleTask from "./scheduleTask/scheduleTask";
-import {useHttp} from "../../hooks/http.hook";
-import {useEffect, useState} from "react";
-import {Oval} from "react-loader-spinner";
+import { motion } from "framer-motion";
+const Schedule = () => {
+    const [schedule, setSchedule] = useState([]);            // array of 6 day‐objects
+    const [loading, setLoading] = useState(true);
+    const { GET } = useHttp();
 
-const Schedule = () =>{
-    const [Schedule, setSchedule] = useState()
-    const  {GET} = useHttp();
-    const [Loading, setLoading] = useState(true);
     useEffect(() => {
-        GET({},"scheduleresource/schedules/personal",{})
-            .then((res)=>{
-                //#Update schedule
-                console.log(res.data);
-                // setSchedule(res.data);
-                // setLoading(false);
+        GET({}, "scheduleresource/schedules/personal", {})
+            .then(res => {
+                // res.data.days is your array of 6 days
+                setSchedule(res.data.days || []);
             })
-        // getWeeksDates();
-        // setInterval(setActiveTimer,1000);
+            .finally(() => setLoading(false));
     }, []);
-    const getCurrentMothDate = () =>{
-        const date = new Date();
-        return `${date.getMonth()+1>9?date.getMonth()+1:'0'+(date.getMonth()+1)}.${date.getFullYear()}`
-    }
-    const getDays = (year, month) => {
-        return new Date(year, month, 0).getDate();
-    };
-    const getTodayDate = () =>{
-        const today = new Date()
-        return today.getDate();
-    }
-    const getWeeksDates = ()=>{
-        const curr = new Date; // get current date
-        const weeksOfDay = [];
-        for (let i = 1; i < 7; i++) {
-            let dateToPush = (curr.getDate() - curr.getDay()+i)>getDays(curr.getFullYear(),curr.getDate())?
-                curr.getDate() - curr.getDay()+i-getDays(curr.getFullYear(),curr.getDate()):
-                curr.getDate() - curr.getDay()+i;
-            weeksOfDay.push(dateToPush) ; // First day is the day of the month - the day of the week
-        }
-        return weeksOfDay;
 
-    }
-    const scheduleAchiver = (date,dayNumber)=>{
-        const today = new Date();
-        if (date ===null || date.length===0) return <ScheduleTask/>
-       return  today.getDay() === dayNumber ?  <ScheduleTask date={date} typeOfTask="task" today={true}/> : <ScheduleTask date={date} typeOfTask="task"/>
+    // labels and dayOfWeek indices for your 6 columns
+    const daysOfWeek = [
+        { label: "Понеділок", dayOfWeek: 1 },
+        { label: "Вівторок",  dayOfWeek: 2 },
+        { label: "Середа",    dayOfWeek: 3 },
+        { label: "Четверг",   dayOfWeek: 4 },
+        { label: "П’ятниця",  dayOfWeek: 5 },
+        { label: "Субота",    dayOfWeek: 6 },
+    ];
 
-    }
-    function getCurrentTime() {
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
-    }
 
-// Функция для проверки, находится ли текущее время в указанном промежутке
-    function isTimeInRange(time, start, end) {
-        return time >= start && time <= end;
-    }
+    const weekDates = (() => {
+        const curr = new Date();
+        // treat Sunday (0) as day 7 so Monday → 1 … Saturday → 6
+        const weekday = curr.getDay() === 0 ? 7 : curr.getDay();
+        // days in current month
+        const thisMonthDays = new Date(curr.getFullYear(), curr.getMonth() + 1, 0).getDate();
+        // days in previous month
+        const prevMonthDays = new Date(curr.getFullYear(), curr.getMonth(), 0).getDate();
 
-// Функция для добавления класса "active-timer" к соответствующему времени
-    function setActiveTimer() {
-        const currentTime = getCurrentTime();
-        const timeElements = document.querySelectorAll('.schedule__content__timer__time');
-        timeElements.forEach(element => {
-            const timeRange = element.innerText.trim().split(' - ');
-            const startTime = timeRange[0];
-            const endTime = timeRange[1];
+        return Array.from({ length: 6 }, (_, i) => {
+            // “raw” day number relative to Monday=1 … Saturday=6
+            const raw = curr.getDate() - weekday + (i + 1);
 
-            if (isTimeInRange(currentTime, startTime, endTime)) {
-                element.classList.add('active-timer');
-            } else {
-                element.classList.remove('active-timer');
+            if (raw < 1) {
+                // before the 1st → wrap into last days of prev month
+                return prevMonthDays + raw;
             }
+            if (raw > thisMonthDays) {
+                // beyond end of month → wrap into next month
+                return raw - thisMonthDays;
+            }
+            return raw;
         });
+    })();
+
+    // static array of your seven possible timeSlots
+    const timeSlots = [1,2,3,4,5,6,7];
+
+    if (loading) {
+        return (
+            <div className="oval__loader">
+                <Oval
+                    visible
+                    height="120"
+                    width="120"
+                    color="#D90429"
+                    secondaryColor="#2B2D42"
+                    ariaLabel="oval-loading"
+                />
+            </div>
+        );
     }
 
     return (
-        <>
-            {Loading ?<div className="oval__loader"><Oval
-                visible={true}
-                height="120"
-                width="120"
-                color="#D90429"
-                secondaryColor="#2B2D42"
-                ariaLabel="oval-loading"
-                wrapperStyle={{}}
-                wrapperClass=""
-            /></div> : <div className="schedule">
-                <div className="schedule__header">
-                    <div className="schedule__header__name">
-                        Розклад/<span>{getCurrentMothDate()}</span>
-                    </div>
-                    <div className="schedule__header__buttons">
-                        {/*<div className="schedule__header__buttons__left">*/}
-                        {/*    <HandySvg src={infoSrc}/>*/}
-                        {/*</div>*/}
-                        {/*<div className="schedule__header__buttons__right">*/}
-                        {/*    <HandySvg src={infoSrc}/>*/}
-                        {/*</div>*/}
-                    </div>
+            <motion.div
+      className="schedule"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+            <div className="schedule__header">
+                <div className="schedule__header__name">
+                    Розклад/<span>{`${new Date().getMonth()+1}`.padStart(2,'0')}.{new Date().getFullYear()}</span>
                 </div>
-                <div className="schedule__content">
-                    <div className="schedule__content__timer">
-                        <div className="schedule__content__timer__time">
-                            09.00 - 10.20
-                        </div>
-                        <div className="schedule__content__timer__time">
-                            10.30 - 11.50
-                        </div>
-                        <div className="schedule__content__timer__time">
-                            12.10 - 13.30
-                        </div>
-                        <div className="schedule__content__timer__time">
-                            13.40 - 15.00
-                        </div>
-                        <div className="schedule__content__timer__time">
-                            15.10 - 16.30
-                        </div>
-                        <div className="schedule__content__timer__time">
-                            16.40 - 18.00
-                        </div>
-                    </div>
-                    <div className="schedule__content__desk">
-                        <div className="schedule__content__desk__header">
-                            <DayDate date={getWeeksDates()[0]} day="Понеділок" active={getWeeksDates()[0]===getTodayDate()} />
-                            <DayDate date={getWeeksDates()[1]} day="Вівторок" active={getWeeksDates()[1]===getTodayDate()}/>
-                            <DayDate date={getWeeksDates()[2]} day="Середа" active={getWeeksDates()[2]===getTodayDate()}/>
-                            <DayDate date={getWeeksDates()[3]} day="Четверг" active={getWeeksDates()[3]===getTodayDate()}/>
-                            <DayDate date={getWeeksDates()[4]} day="П’ятниця"active={getWeeksDates()[4]===getTodayDate()} />
-                            <DayDate date={getWeeksDates()[5]} day="субота" active={getWeeksDates()[5]===getTodayDate()}/>
-                        </div>
-                        <div className="schedule__content__desk__row">
-                            {scheduleAchiver(Schedule.monday.firstLesson,1)}
-                            {scheduleAchiver(Schedule.tuesday.firstLesson,2)}
-                            {scheduleAchiver(Schedule.wednesday.firstLesson,3)}
-                            {scheduleAchiver(Schedule.thursday.firstLesson,4)}
-                            {scheduleAchiver(Schedule.friday.firstLesson,5)}
-                            <ScheduleTask typeOfTask={"space"}/>
-                        </div>
-                        <div className="schedule__content__desk__row">
-                            {scheduleAchiver(Schedule.monday.secondLesson,1)}
-                            {scheduleAchiver(Schedule.tuesday.secondLesson,2)}
-                            {scheduleAchiver(Schedule.wednesday.secondLesson,3)}
-                            {scheduleAchiver(Schedule.thursday.secondLesson,4)}
-                            {scheduleAchiver(Schedule.friday.secondLesson,5)}
-                            <ScheduleTask/>
-                        </div>
-                        <div className="schedule__content__desk__row">
-                            {scheduleAchiver(Schedule.monday.thirdLesson,1)}
-                            {scheduleAchiver(Schedule.tuesday.thirdLesson,2)}
-                            {scheduleAchiver(Schedule.wednesday.thirdLesson,3)}
-                            {scheduleAchiver(Schedule.thursday.thirdLesson,4)}
-                            {scheduleAchiver(Schedule.friday.thirdLesson,5)}
-                            <ScheduleTask/>
-                        </div>
-                        <div className="schedule__content__desk__row">
-                            {scheduleAchiver(Schedule.monday.fourthLesson,1)}
-                            {scheduleAchiver(Schedule.tuesday.fourthLesson,2)}
-                            {scheduleAchiver(Schedule.wednesday.fourthLesson,3)}
-                            {scheduleAchiver(Schedule.thursday.fourthLesson,4)}
-                            {scheduleAchiver(Schedule.friday.fourthLesson,5)}
-                            <ScheduleTask/>
-                        </div>
-                        <div className="schedule__content__desk__row">
-                            {scheduleAchiver(Schedule.monday.sixthLesson,1)}
-                            {scheduleAchiver(Schedule.tuesday.sixthLesson,2)}
-                            {scheduleAchiver(Schedule.wednesday.sixthLesson,3)}
-                            {scheduleAchiver(Schedule.thursday.sixthLesson,4)}
-                            {scheduleAchiver(Schedule.friday.sixthLesson,5)}
-                            <ScheduleTask/>
-                        </div>
-                        <div className="schedule__content__desk__row">
-                            {scheduleAchiver(Schedule.monday.seventhLesson,1)}
-                            {scheduleAchiver(Schedule.tuesday.seventhLesson,2)}
-                            {scheduleAchiver(Schedule.wednesday.seventhLesson,3)}
-                            {scheduleAchiver(Schedule.thursday.seventhLesson,4)}
-                            {scheduleAchiver(Schedule.friday.seventhLesson,5)}
-                            <ScheduleTask/>
-                        </div>
-                    </div>
+                <div className="schedule__header__buttons">
+                    {/* your existing buttons here (commented out) */}
+                </div>
+            </div>
+
+            <div className="schedule__content">
+                <div className="schedule__content__timer">
+                    <div className="schedule__content__timer__time">09.00 - 10.20</div>
+                    <div className="schedule__content__timer__time">10.30 - 11.50</div>
+                    <div className="schedule__content__timer__time">12.10 - 13.30</div>
+                    <div className="schedule__content__timer__time">13.40 - 15.00</div>
+                    <div className="schedule__content__timer__time">15.10 - 16.30</div>
+                    <div className="schedule__content__timer__time">16.40 - 18.00</div>
+                    <div className="schedule__content__timer__time">18.10 - 19.30</div>
                 </div>
 
-            </div>}
-        </>
+                <div className="schedule__content__desk">
+                    <div className="schedule__content__desk__header">
+                        {daysOfWeek.map((d, idx) => (
+                            <DayDate
+                                key={d.dayOfWeek}
+                                date={weekDates[idx]}
+                                day={d.label}
+                                active={weekDates[idx] === new Date().getDate()}
+                            />
+                        ))}
+                    </div>
 
-    )
-}
+                    {timeSlots.map(slot => (
+                        <div className="schedule__content__desk__row" key={slot}>
+                            {daysOfWeek.map(d => {
+                                const dayData = schedule.find(x => x.dayOfWeek === d.dayOfWeek) || { lessons: [] };
+                                const lesson = dayData.lessons.find(l => l.timeSlot === slot);
+
+
+                                const isToday = new Date().getDay() === d.dayOfWeek;
+                                if (!lesson) {
+                                    if (slot===1 && dayData.lessons.length ===0) {
+                                        return <ScheduleTask key={`${d.dayOfWeek}-${slot}`} typeOfTask="space" />;
+                                    }else {
+                                        return <ScheduleTask/>
+                                    }
+
+                                }else {
+                                    return (
+                                        <ScheduleTask
+                                            key={lesson.id}
+                                            date={{
+                                                lectureName:   lesson.lectureName   || lesson.eduItem,
+                                                lecturerName:  lesson.lecturerName  || lesson.teacher,
+
+                                                shared: lesson.shared,
+                                                lectureLink:   lesson.lectureLink  || lesson.conferenceUrl
+                                            }}
+                                            practice={lesson.practice}
+                                            typeOfTask="task"
+                                            importance={lesson.importance}
+                                            today={isToday}
+                                        />
+                                    );
+                                }
+
+                            })}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 export default Schedule;

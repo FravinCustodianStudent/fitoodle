@@ -44,13 +44,12 @@ import {DownloadIcon} from "lucide-react";
 import TaskDetailsCard from "./TaskDetailsCard";
 import {useNavigate, useSearchParams} from "react-router-dom";
 import {theme} from "antd/lib";
-
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
-
 /** SelectCourseModal: Allows selection of a course from the list fetched from API */
-const SelectCourseModal = ({ visible, onClose, onSelect, courses }) => {
+const MotionListItem = motion(List.Item);
+const SelectCourseModal = ({ visible, onClose, onSelect, courses,selectedCourseId }) => {
     const [filterText, setFilterText] = useState('');
     const filteredCourses = courses.filter((course) =>
         course.name.toLowerCase().includes(filterText.toLowerCase())
@@ -67,15 +66,18 @@ const SelectCourseModal = ({ visible, onClose, onSelect, courses }) => {
             <List
                 dataSource={filteredCourses}
                 renderItem={(course) => (
-                    <List.Item
-                        style={{ cursor: 'pointer' }}
+                    <MotionListItem
+                        key={course.id}
+                        style={{ cursor: 'pointer',borderRadius: 10 }}
                         onClick={() => {
                             onSelect(course);
                             onClose();
                         }}
+                        whileHover={{ scale: 1.009 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
                     >
-                        <List.Item.Meta title={course.name} />
-                    </List.Item>
+                        <List.Item.Meta avatar={selectedCourseId&&selectedCourseId===course.id?<CheckCircleOutlined />: null}  title={course.name} />
+                    </MotionListItem>
                 )}
             />
         </Modal>
@@ -171,7 +173,6 @@ const CreateTaskDrawer = ({ visible, onClose, onCreate, selectedCourse }) => {
     const handleFinish = (values) => {
         const fileIds = uploadedFiles.map((file) => file.response.id);
         const newTask = {
-            id: Date.now().toString(),
             name: values.name,
             authorId: currentUser.id,
             eduCourseId: selectedCourse ? selectedCourse.id : '',
@@ -371,6 +372,9 @@ const TaskResultModal = ({ visible, onClose, taskResult }) => {
         </Modal>
     );
 };
+const MotionLayout = motion(Layout);
+const MotionSider = motion(Sider);
+const MotionContent = motion(Content);
 
 const TasksAdmin = () => {
     const { GET, POST } = useHttp();
@@ -429,14 +433,7 @@ const TasksAdmin = () => {
     };
 
     const handleCreateTask = (newTask) => {
-        const payload = {
-            ...newTask,
-            id: Date.now().toString(),
-            authorId: user.id,
-            eduCourseId: selectedCourse.id,
-            testId: null,
-        };
-        setTasks([...tasks, ...payload]);
+        setTasks([...tasks, newTask]);
 
     };
 
@@ -501,9 +498,14 @@ const TasksAdmin = () => {
 
     return (
         <Layout style={{ height: '100vh' }}>
-            <Layout >
-                {/* Sidebar */}
-                <Sider  style={{ background: '#fff', padding: '20px' }} width={300}>
+            <MotionLayout style={{ minHeight: '100vh', background: '#ffffff' }}>
+                <MotionSider
+                    width={300}
+                    style={{ background: '#fff', padding: '20px' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ type: 'ease', stiffness: 300, damping: 20 }}
+                >
                     <Title level={4}>Task Administration</Title>
                     <div style={{ marginBottom: 16 }}>
                         <Button type="primary" onClick={() => setSelectCourseModalVisible(true)}>
@@ -513,7 +515,6 @@ const TasksAdmin = () => {
                             <Tag color="red" style={{ marginLeft: 8 }}>{selectedCourse.name}</Tag>
                         )}
                     </div>
-
                     <Divider />
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
                         <Popover content={filterContent} trigger="click">
@@ -527,7 +528,6 @@ const TasksAdmin = () => {
                             prefix={<SearchOutlined />}
                         />
                     </div>
-
                     <Divider />
                     <Button
                         type="primary"
@@ -537,31 +537,42 @@ const TasksAdmin = () => {
                     >
                         <PlusCircleOutlined /> Create Task
                     </Button>
-
                     <List
                         header={<div>Tasks</div>}
                         bordered
                         dataSource={filteredTasks}
                         style={{ marginTop: 16 }}
                         renderItem={(item) => (
-                            <List.Item
+                            <MotionListItem
                                 onClick={() => onTaskSelect(item)}
+                                key={item.id}
                                 style={{
                                     cursor: 'pointer',
-                                    background: selectedTask?.id === item.id ? "#2B2D42" : 'transparent',
+                                    background: selectedTask?.id === item.id ? '#2B2D42' : 'transparent',
                                 }}
+                                whileHover={{ scale: 1.03, borderRadius: 5 }}
+                                transition={{ type: 'spring', stiffness: 300 }}
                             >
-                                <Text style={{color: selectedTask?.id === item.id ? "white" : 'black'}} strong>{item.name}</Text><br />
-                                <Text style={{color: selectedTask?.id === item.id ? "rgba(255, 255,255, 0.6)" : 'rgba(0, 0, 0, 0.45)'}} type="secondary">
+                                <Text style={{ color: selectedTask?.id === item.id ? '#fff' : '#000' }} strong>
+                                    {item.name}
+                                </Text>
+                                <br />
+                                <Text
+                                    style={{ color: selectedTask?.id === item.id ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.45)' }}
+                                    type="secondary"
+                                >
                                     {moment(item.deadline).isSameOrAfter(moment(), 'day') ? 'Active' : 'Deadline Passed'}
                                 </Text>
-                            </List.Item>
+                            </MotionListItem>
                         )}
                     />
-                </Sider>
-
-                {/* Content */}
-                <Content style={{ padding: '20px', background: '#fff' }}>
+                </MotionSider>
+                <MotionContent
+                    style={{ padding: '20px', background: '#fff', flex: 1 }}
+                    initial={{ x: 300, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 150, damping: 20 }}
+                >
                     {selectedTask ? (
                         <TaskDetailsCard
                             task={selectedTask}
@@ -569,10 +580,12 @@ const TasksAdmin = () => {
                             onDelete={handleDeleteTask}
                         />
                     ) : (
-                        <Card><Title level={4}>Select a task to see details.</Title></Card>
+                        <Card>
+                            <Title level={4}>Select a task to see details.</Title>
+                        </Card>
                     )}
-                </Content>
-            </Layout>
+                </MotionContent>
+            </MotionLayout>
 
             {/* Create Task Drawer */}
             <CreateTaskDrawer
@@ -585,6 +598,7 @@ const TasksAdmin = () => {
             {/* Course Selection Modal */}
             <SelectCourseModal
                 visible={selectCourseModalVisible}
+                selectedCourseId={selectedCourse?selectedCourse.id:null}
                 onClose={() => setSelectCourseModalVisible(false)}
                 onSelect={(course) => {
                     setSelectedCourse(course)

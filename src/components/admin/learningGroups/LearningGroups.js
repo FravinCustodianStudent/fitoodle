@@ -602,12 +602,20 @@ const LearningGroups = () => {
         setLoading(true);
         POST({}, 'userdataresource/groups', {}, groupData)
             .then((response) => {
+                POST({name:`${response.data.specNameShort} ${response.data.groupNumber} ${response.data.enterYear}`,
+                    groupIds :response.data.id},"scheduleresource/schedules",{},{})
+                    .then(res => {
+                    })
+                    .catch(err => {
+                        message.error("Error creating Schedule");
+                    })
                 GET({}, "userdataresource/groups", {})
                     .then((res) => {
                         setGroups(res.data);
                         const newGroup = response.data;
                         message.success(`Group "${newGroup.specNameShort}" created successfully!`);
                         setIsModalVisible(false);
+
                     })
                     .catch((err) => {
                         console.log(err);

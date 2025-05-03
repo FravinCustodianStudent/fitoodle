@@ -47,7 +47,7 @@ const CourseListItem = ({task,mark,testId,taskId}) =>{
         </div>
         <div className="class__details__content__list__content__item__link">
             <div className="class__details__content__list__content__item__link__mark">{mark.markValue}/{task.maxMarkValue}</div>
-            {!taskId?<Link to={`/courses/task/${taskId}`}><div className="class__details__content__list__content__item__link__button"> <HandySvg src={arrowSrc}/></div></Link>:
+            {!testId?<Link to={`/courses/task/${taskId}`}><div className="class__details__content__list__content__item__link__button"> <HandySvg src={arrowSrc}/></div></Link>:
                 <Link to={`/courses/task/test/${taskId}/${testId}`}><div className="class__details__content__list__content__item__link__button"> <HandySvg src={arrowSrc}/></div></Link>}
 
 
