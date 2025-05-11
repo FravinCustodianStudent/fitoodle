@@ -1,120 +1,151 @@
-
 import "./main.scss";
 import SearchInput from "./inputs/SearchInput";
 import Task from "./task/task";
-import {Link, useNavigate} from "react-router-dom";
-import {useDispatch, useSelector} from "react-redux";
-import {useEffect, useState} from "react";
-import {useHttp} from "../../hooks/http.hook";
-import {Oval} from "react-loader-spinner";
-import {useErrorBoundary, withErrorBoundary} from "react-use-error-boundary";
+import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { useHttp } from "../../hooks/http.hook";
+import { Oval } from "react-loader-spinner";
+import { withErrorBoundary } from "react-use-error-boundary";
+import { motion } from "framer-motion";
 
 const Main = withErrorBoundary(() => {
-    const user = useSelector(state => state.users.user);
-    const [error, setError] = useState(false)
-    const [errorH, resetError] = useErrorBoundary((error,errorInfo)=>{
-            console.log(error);
-            console.log(errorInfo)
-    }
-    )
-    const [Loading, setLoading] = useState(true)
-    const {GET} = useHttp();
-    const [Tasks, setTasks] = useState({});
-    useEffect(()=>{
-            if (Object.keys(user).length!==0 && !error ){
-                getTasks()
-            }
-    },[user,error]);
+    const user = useSelector((state) => state.users.user);
+    const { GET } = useHttp();
+    const [Tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
-    const getTasks = () =>{
-            GET({studentId:user.id},"userdataresource/groups/by-student",{})
-                .then((res)=>{
-                    GET({groupId:res.data.id},"courseresource/courses/by/group",{})
-                        .then((result)=>{
-                            if(result.data.length!==0){
-                                GET({eduCourseId:result.data[0].id},"taskresource/tasks/by/course",{})
-                                    .then((spacite)=>{
-                                        if (spacite.data.length!==0 && spacite.data !==null){
-                                            setTasks(spacite.data);
-                                            setLoading(false);
-                                        }else {
-                                            setLoading(false)
-                                            setError(true)
-                                        }
-
-                                    })
-                            }else {
-                                setTasks([]);
-                                setLoading(false);
-                            }
-
-
-                        })
-                }).catch(err=>{
-                    console.log(err)
-                setLoading(false)
-                setError(true)
-
-            })
-    }
-    const renderItems = arr =>{
-        let items;
-        if (!error){
-             items = arr.map((item, i) => {
-
-                return(
-                    <Task testId={Tasks[i].testId} id={Tasks[i].id} deadline={Tasks[i].deadline} taskName={Tasks[i].name} authorId={Tasks[i].authorId} createdAt={Tasks[i].createdAt} />
+    useEffect(() => {
+        if (!error && user && Object.keys(user).length) {
+            GET({ studentId: user.id }, "userdataresource/groups/by-student", {})
+                .then((res) =>
+                    GET({ groupId: res.data.id }, "courseresource/courses/by/group", {})
                 )
-            })
+                .then((result) => {
+                    if (result.data.length) {
+                        return GET(
+                            { eduCourseId: result.data[0].id },
+                            "taskresource/tasks/by/course",
+                            {}
+                        );
+                    } else {
+                        setTasks([]);
+                        setLoading(false);
+                        throw new Error("No courses");
+                    }
+                })
+                .then((tasksRes) => {
+                    if (tasksRes.data && tasksRes.data.length) {
+                        setTasks(tasksRes.data);
+                    } else {
+                        setError(true);
+                    }
+                })
+                .catch(() => setError(true))
+                .finally(() => setLoading(false));
         }
+    }, [user, error, GET]);
 
-    return(
-        <div className="main">
-            <div className="main__name">
-                <h1>
-                    Добрий день, <Link to={"/"}>{user.firstName+ " "+user.lastName}</Link>
-                </h1>
+    if (loading) {
+        return (
+            <div className="oval__loader">
+                <Oval
+                    visible
+                    height="120"
+                    width="120"
+                    color="#D90429"
+                    secondaryColor="#2B2D42"
+                    ariaLabel="oval-loading"
+                />
             </div>
+        );
+    }
+
+    return (
+        <motion.div
+            className="main"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+        >
+            <motion.div
+                className="main__name"
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                <h1>
+                    Добрий день,&nbsp;
+                    <Link to="/">{user.firstName + " " + user.lastName}</Link>
+                </h1>
+            </motion.div>
+
             <div className="main__content">
                 <div className="main__content__tasks">
                     <div className="main__content__tasks__info">
-                        <div className="main__content__tasks__info__name">
-                            <div className="main__content__tasks__info__name__text">Завдання</div>
-                            {error ? <div className="main__content__tasks__info__name__count">0</div>:
-                                <div className="main__content__tasks__info__name__count">{Tasks.length}</div>}
+                        <motion.div
+                            className="main__content__tasks__info__name"
+                            initial={{ opacity: 0, x: -30 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.4 }}
+                        >
+                            <div className="main__content__tasks__info__name__text">
+                                Завдання
+                            </div>
+                            <div className="main__content__tasks__info__name__count">
+                                {error ? 0 : Tasks.length}
+                            </div>
+                        </motion.div>
 
-                        </div>
-
-                        <div className="main__content__tasks__info__search">
-                            <SearchInput></SearchInput>
-                        </div>
+                        <motion.div
+                            className="main__content__tasks__info__search"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3, duration: 0.4 }}
+                        >
+                            <SearchInput />
+                        </motion.div>
                     </div>
-                    <div className="main__content__tasks__list">
 
-                        {error? "Завдань немає" : items}
-                    </div>
+                    <motion.div
+                        className="main__content__tasks__list"
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                            hidden: {},
+                            visible: { transition: { staggerChildren: 0.1 } }
+                        }}
+                    >
+                        {error ? (
+                            <div className="main__no-tasks">Завдань немає</div>
+                        ) : (
+                            Tasks.map((task) => (
+                                <motion.div
+                                    key={task.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <Task
+                                        testId={task.testId}
+                                        id={task.id}
+                                        deadline={task.deadline}
+                                        taskName={task.name}
+                                        authorId={task.authorId}
+                                        createdAt={task.createdAt}
+                                    />
+                                </motion.div>
+                            ))
+                        )}
+                    </motion.div>
                 </div>
+
                 <div className="main__content__schedule"></div>
             </div>
-
-        </div>
-    )
-    }
-    ;
-    return(
-        <>
-            {Loading ?<div className="oval__loader"><Oval
-                visible={true}
-                height="120"
-                width="120"
-                color="#D90429"
-                secondaryColor="#2B2D42"
-                ariaLabel="oval-loading"
-                wrapperStyle={{}}
-                wrapperClass=""
-            /></div> : renderItems(Tasks)}
-        </>
-
-    )
+        </motion.div>
+    );
 });
+
 export default Main;

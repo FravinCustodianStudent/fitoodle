@@ -853,8 +853,6 @@ const CourseManagerPage = () => {
                                           <List.Item
                                             actions={[
                                               <Button icon={<EyeOutlined />}   onClick={() => handleView(test)}   />,
-                                          <Button icon={<EditOutlined />}  onClick={() => handleEdit(test)}   />,
-                                          <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(test)} />,
                                         ]}
                                       >
                                         <List.Item.Meta

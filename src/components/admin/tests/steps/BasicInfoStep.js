@@ -2,7 +2,8 @@ import React from 'react';
 import { Row, Col, Card, Form, Input, InputNumber, Button, List } from 'antd';
 import { FileTextOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import CreateTaskDrawer from '../drawers/CreateTaskDrawer';
-
+import { motion } from 'framer-motion';
+import classNames from 'classnames';
 const BasicInfoStep = ({
                            finalTestData,
                            setFinalTestData,
@@ -55,18 +56,40 @@ const BasicInfoStep = ({
                     <List
                         bordered
                         dataSource={tasks}
-                        renderItem={(task) => (
-                            <List.Item
-                                onClick={() => onTaskSelect(task)}
-                                style={{ cursor: task.testId ? 'not-allowed' : 'pointer', backgroundColor: activeTask?.id === task.id ? '#f5f5f5' : undefined }}
-                                actions={[
-                                    <Button type="link" icon={<EditOutlined />} onClick={e => { e.stopPropagation(); openTaskDrawer(task); }} disabled={!!task.testId} />,
-                                    <Button type="link" icon={<DeleteOutlined />} onClick={e => { e.stopPropagation(); onDeleteTask(task.id); }} />
-                                ]}
-                            >
-                                <List.Item.Meta title={task.name} description={task.description} />
-                            </List.Item>
-                        )}
+                        renderItem={(task) => {
+                            const isActive = activeTask?.id === task.id;
+                            return (
+                                <List.Item
+                                    onClick={() => onTaskSelect(task)}
+                                    className={classNames('fravin_list', { active: isActive })}
+                                    style={{ cursor: task.testId ? 'not-allowed' : 'pointer' }}
+                                    actions={[
+                                        <Button
+                                            key="edit"
+                                            type="link"
+                                            icon={<EditOutlined />}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                openTaskDrawer(task);
+                                            }}
+                                            disabled={!!task.testId}
+                                        />,
+                                    ]}
+                                >
+                                    <motion.div
+                                        // animate the backgroundColor
+                                        initial={false}
+                                        transition={{ duration: 0.3 }}
+                                        style={{ width: '100%', padding: '12px 0' }}
+                                    >
+                                        <List.Item.Meta
+                                            title={task.name}
+                                            description={task.description}
+                                        />
+                                    </motion.div>
+                                </List.Item>
+                            );
+                        }}
                         locale={{ emptyText: 'No tasks yet' }}
                     />
                 </Card>

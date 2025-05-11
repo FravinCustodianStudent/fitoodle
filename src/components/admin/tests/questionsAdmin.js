@@ -4,7 +4,6 @@ import { Steps, Modal, Form, Select, Alert, Button } from 'antd';
 import { BookOutlined, EditOutlined } from '@ant-design/icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
-
 import { useCourseService } from '../services/useCourseService';
 import { useHttp } from '../../../hooks/http.hook';
 
@@ -95,7 +94,9 @@ const QuestionsAdmin = () => {
         }
 
         GET({ eduCourseId: courseInfo.id }, 'taskresource/tasks/by/course', {})
-            .then((res) => setTasks(res.data))
+            .then((res) => {
+
+                setTasks(res.data.filter(item => item.testId === null))})
             .catch(() => {});
 
         GET({}, 'testingresource/questionGroups', {})

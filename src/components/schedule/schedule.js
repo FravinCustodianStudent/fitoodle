@@ -9,8 +9,11 @@ const Schedule = () => {
     const [schedule, setSchedule] = useState([]);            // array of 6 day‐objects
     const [loading, setLoading] = useState(true);
     const { GET } = useHttp();
-
+    const [teachers, setTeachers] = useState([])
     useEffect(() => {
+        GET({}, 'userdataresource/users?active=true&roles=TEACHER', {})
+            .then(res => setTeachers(res.data))
+            .catch(console.error)
         GET({}, "scheduleresource/schedules/personal", {})
             .then(res => {
                 // res.data.days is your array of 6 days
@@ -18,7 +21,6 @@ const Schedule = () => {
             })
             .finally(() => setLoading(false));
     }, []);
-
     // labels and dayOfWeek indices for your 6 columns
     const daysOfWeek = [
         { label: "Понеділок", dayOfWeek: 1 },
@@ -117,7 +119,10 @@ const Schedule = () => {
                             {daysOfWeek.map(d => {
                                 const dayData = schedule.find(x => x.dayOfWeek === d.dayOfWeek) || { lessons: [] };
                                 const lesson = dayData.lessons.find(l => l.timeSlot === slot);
+                                console.log(lesson);
 
+                                const teacherObj = lesson?  teachers.find(t => t.id === lesson.teacher) : {};
+                                const teacherName = teacherObj.firstName+" "+ teacherObj.lastName;
 
                                 const isToday = new Date().getDay() === d.dayOfWeek;
                                 if (!lesson) {
@@ -133,7 +138,7 @@ const Schedule = () => {
                                             key={lesson.id}
                                             date={{
                                                 lectureName:   lesson.lectureName   || lesson.eduItem,
-                                                lecturerName:  lesson.lecturerName  || lesson.teacher,
+                                                lecturerName:  lesson.lecturerName  || teacherName,
 
                                                 shared: lesson.shared,
                                                 lectureLink:   lesson.lectureLink  || lesson.conferenceUrl

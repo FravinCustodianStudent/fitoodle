@@ -16,10 +16,10 @@ $col) {
 body{
   background: #141414;
 }
-canvas{
-  position:absolute;
-  top:0;
-  left:0;
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 .App{
     justify-content: center;
@@ -140,35 +140,82 @@ $col) {
   height: 55px;
   margin-top: 50px;
   overflow: hidden;
-  box-shadow: 0px 1px 5px 1px rgba(0,0,0,0.21);
-  border: 1px solid;
+  border-radius: 8px;
   font-family: 'Lato', sans-serif;
   font-weight: 700;
   font-size: 20px;
-  transition: 0.5s;
   letter-spacing: 1px;
-  border-radius: 8px;
+  transition: 0.5s;
 
   button {
-    width: 101%;
+    width: 100%;
     height: 100%;
-    font-weight: 700;
+    background-color: #D90429;
+    color: #fff;
     font-size: 20px;
-    letter-spacing: 1px;
-
-    @include button(#D90429,
-            "https://raw.githubusercontent.com/robin-dela/css-mask-animation/master/img/nature-sprite.png",
-            2300%,
-            100%,
-            none,
-            #fff);
+    font-weight: 700;
+    position: relative;
+    overflow: hidden;
     cursor: pointer;
-    -webkit-animation: ani2 0.7s steps(22) forwards;
-    animation: ani2 0.7s steps(22) forwards;
+    transition: all 0.25s ease;
+    border: none;
+    // push the label left when hovered
+    span {
+      position: relative;
+      left: -0.5em;
+      transition: all 0.25s;
+    }
+
+    // arrow circle (::before) and sliding text (::after)
+    &::before,
+    &::after {
+      height: 100%;
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: rgb(217, 4, 41);
+      transition: all 0.25s;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    // the little arrow
+    &::before {
+      width: 40px;
+      content: ">";
+      font-size: 20px;
+      font-weight: bold;
+      text-indent: 5px;
+      border-radius: 50% 0 0 50%;
+    }
+
+    // the hover-text that slides in
+    &::after {
+      width: 100%;
+      transform: translateX(100%);
+      content: attr(data-hover);
+      text-align: left;
+      padding-left: 8px;
+    }
 
     &:hover {
-      -webkit-animation: ani 0.7s steps(22) forwards;
-      animation: ani 0.7s steps(22) forwards;
+      border-color: rgb(128, 0, 22);
+
+      // slide the original label out
+      span {
+        left: -100%;
+      }
+
+      // move arrow and text in from the right
+      &::before {
+        right: 70%;
+      }
+      &::after {
+        right: 70%;
+      }
     }
   }
 }
@@ -181,7 +228,6 @@ $col) {
   margin-right: auto;
   margin-top: 7vh;
   overflow: hidden;
-  border: 1px solid #000;
   font-family: 'Lato', sans-serif;
   font-weight: 300;
   transition: 0.5s;

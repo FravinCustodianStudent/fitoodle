@@ -8,6 +8,7 @@ import {NavLink, useNavigate} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import {use, useEffect, useState} from "react";
 import AuthChecker from "../shared/authChecker";
+import { motion } from "framer-motion";
 import {setUser} from "../../slices/userSlice";
 import {useHttp} from "../../hooks/http.hook";
 import {Oval} from "react-loader-spinner";
@@ -41,14 +42,47 @@ const Header = () => {
     }
     const renderElement = () =>{
         return <>
-            <div className="header__avatar"><img src={user.imageUrl} alt="user avatar"/> </div>
-            <nav className="header__nav">
-                <NavLink to={"/"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={homeSrc} className="svg" /></a></NavLink>
-                <NavLink to={"/courses"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={courseSrc} className="svg" /></a></NavLink>
-                <NavLink to={"/schedule"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={scheduleSrc} className="svg" /></a></NavLink>
-                {checkUserAuthority()}
+            <motion.div
+                className="header__avatar"
+                initial={{ x: -50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            >
+                <img src={user.imageUrl} alt="user avatar" />
+            </motion.div>
 
-            </nav>
+            <motion.nav
+                className="header__nav"
+                initial={{ x: -200, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ type: 'tween', duration: 0.6 }}
+            >
+                <NavLink
+                    to="/"
+                    className={({ isActive }) =>
+                        isActive ? "header__nav__item active" : "header__nav__item"
+                    }
+                >
+                    <HandySvg src={homeSrc} className="svg" />
+                </NavLink>
+                <NavLink
+                    to="/courses"
+                    className={({ isActive }) =>
+                        isActive ? "header__nav__item active" : "header__nav__item"
+                    }
+                >
+                    <HandySvg src={courseSrc} className="svg" />
+                </NavLink>
+                <NavLink
+                    to="/schedule"
+                    className={({ isActive }) =>
+                        isActive ? "header__nav__item active" : "header__nav__item"
+                    }
+                >
+                    <HandySvg src={scheduleSrc} className="svg" />
+                </NavLink>
+                {checkUserAuthority()}
+            </motion.nav>
         </>
     }
     return(

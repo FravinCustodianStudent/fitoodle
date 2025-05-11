@@ -9,7 +9,14 @@ import {Oval} from "react-loader-spinner";
 import courseSrc from "../../assets/courses.svg";
 import scheduleSrc from "../../assets/schedule.svg";
 import settingsSrc from "../../assets/settings.svg";
+import educationSrc from "../../assets/education.svg";
+import documentSrc from "../../assets/document.svg";
+import examSrc from "../../assets/exam.svg";
+import {
+    AuditOutlined,
 
+} from '@ant-design/icons';
+import {Tooltip} from "antd";
 
 const AdminHeader = () =>{
     const user = useSelector(state => state.users.user);
@@ -38,10 +45,21 @@ const AdminHeader = () =>{
         return <>
             <div className="header__avatar"><img src={user.imageUrl} alt="user avatar"/> </div>
             <nav className="header__nav">
-                <NavLink to={"/admin"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={homeSrc} className="svg" /></a></NavLink>
-                <NavLink to={"/courses"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={courseSrc} className="svg" /></a></NavLink>
-                <NavLink to={"/schedule"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={scheduleSrc} className="svg" /></a></NavLink>
-                <NavLink to={"/settings"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={settingsSrc} className="svg" /></a></NavLink>
+                <NavLink to={"/admin"} end className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={homeSrc} className="svg" /></a></NavLink>
+                <NavLink to={"/admin/lergroups"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }>
+                    <Tooltip placement="top" title={"Learning Groups"}>
+                        <a href=""><HandySvg src={educationSrc} className="svg" /></a>
+                    </Tooltip></NavLink>
+                <NavLink to={"/admin/courses"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={courseSrc} className="svg" /></a></NavLink>
+                <NavLink to={"/admin/questions"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><Tooltip placement="top" title={"Questions"}>
+                    <a href=""><HandySvg src={examSrc} className="svg" /></a>
+                </Tooltip></NavLink>
+                <NavLink to={"/admin/tasks"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><Tooltip placement="top" title={"Tasks"}>
+                    <a href=""><HandySvg src={documentSrc} className="svg" /></a>
+                </Tooltip></NavLink>
+                <NavLink to={"/admin/schedule"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={scheduleSrc} className="svg" /></a></NavLink>
+
+                <NavLink to={"/"} className={({isActive})=> isActive ? "header__nav__item active" : "header__nav__item" }><a href=""><HandySvg src={settingsSrc} className="svg" /></a></NavLink>
             </nav>
         </>
     }

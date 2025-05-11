@@ -3,10 +3,31 @@
   border-color: #2B2D42 !important;
   color: #fff !important; /* Чтобы текст был читаем */
 }
+
 .ant-steps-item-finish .ant-steps-icon .anticon{
   svg{
     fill: white !important;
   }
+}
+.fravin_list {
+  position: relative;
+  overflow: hidden;
+}
+
+/* the left “bar” */
+.fravin_list::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 0;
+  height: 100%;
+  background: #D90429;
+  transition: width 0.3s ease;
+}
+
+/* when active, expand the bar */
+.fravin_list.active::before {
+  width: 8px;
 }
 :where(.css-dev-only-do-not-override-tjsggz).ant-btn-variant-solid:hover {
   background: #D90429 !important;

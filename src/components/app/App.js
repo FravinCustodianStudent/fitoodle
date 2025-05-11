@@ -71,14 +71,14 @@ const router = createBrowserRouter([
             element:<ErrorBoundry/>
         }
     ]},
-    {path:"/login",Component:Login},
+    {path:"/login",Component:LoginTest},
     {path:"/code",Component:Code},
-    {path:"/test",Component:LoginTest},
+    {path:"/test",Component:Login},
     {path:"/admin",Component:AdminPage,
     children:[
         {
             path: '/admin',
-            element: <AdminMain/>
+            element: <Dashboard/>
         },
         {
             path: '/admin/lergroups',
@@ -86,7 +86,7 @@ const router = createBrowserRouter([
         },
         {
             path: '/admin/dashboard',
-            element: <Dashboard/>
+            element: <AdminMain/>
         },
         {
             path: '/admin/groups',

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Row, Col, Card, Button, List, Drawer, Form, InputNumber, message, Modal } from 'antd';
 import { FileTextOutlined, PlusOutlined, ArrowLeftOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useHttp } from '../../../../hooks/http.hook';
+import {useNavigate, useSearchParams} from "react-router-dom";
 
 // TestManagementStep: review configs and create test via API
 // Props:
@@ -20,7 +21,8 @@ const TestManagementStep = ({
                                 onComplete
                             }) => {
     const { POST,PUT } = useHttp();
-
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [localConfigs, setLocalConfigs] = useState(questionConfigs);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [editingConfig, setEditingConfig] = useState(null);
@@ -88,6 +90,8 @@ const TestManagementStep = ({
             okText: 'Create',
             cancelText: 'Cancel',
             onOk: () => {
+                const courseId = searchParams.get('courseId');
+
                 const payload = {
                     name: finalTestData.testName,
                     description: finalTestData.description,
@@ -108,6 +112,7 @@ const TestManagementStep = ({
                     })
                     .then(() => {
                         message.success('Test created and linked successfully');
+                        navigate(`/admin/questions?courseId=${courseId}`);
                         if (onComplete) onComplete();
                     })
                     .catch(() => {

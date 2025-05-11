@@ -1,412 +1,297 @@
-const Js = () =>{
-    const start= () =>{
-        var tetrominos = [{
-            // box
-            colors : ['rgb(43,45,66)', 'rgb(148,155,228)', 'rgb(104,109,160)'],
-            data : [[0, 0, 0, 0],
-                [0, 1, 1, 0],
-                [0, 1, 1, 0],
-                [0, 0, 0, 0]]
-        },
-            {
-                // stick
-                colors : ['rgb(217,4,40)', 'rgb(241,108,107)', 'rgb(208,4,38)'],
-                data : [[0, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [1, 1, 1, 1],
-                    [0, 0, 0, 0]]
-            },
-        ];
+import React, { useEffect } from 'react';
 
-        var Tetris = function(x,y,width,height){
-            this.posX = x || 0;
-            this.posY = y || 0;
+const tetrominos = [
+    {
+        colors: ['rgb(43,45,66)', 'rgb(148,155,228)', 'rgb(104,109,160)'],
+        data: [
+            [0, 0, 0, 0],
+            [0, 1, 1, 0],
+            [0, 1, 1, 0],
+            [0, 0, 0, 0],
+        ],
+    },
+    {
+        colors: ['rgb(217,4,40)', 'rgb(241,108,107)', 'rgb(208,4,38)'],
+        data: [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [1, 1, 1, 1],
+            [0, 0, 0, 0],
+        ],
+    },
+];
 
-            this.width  = width || window.innerWidth;
-            this.height = height || window.innerHeight;
+class Tetris {
+    constructor(x, y, width, height) {
+        this.posX = x;
+        this.posY = y;
+        this.width = width;
+        this.height = height;
+        this.unitSize = 20;
 
-            this.bgCanvas = document.createElement('canvas');
-            this.fgCanvas = document.createElement('canvas');
+        this.bgCanvas = document.createElement('canvas');
+        this.fgCanvas = document.createElement('canvas');
+        this.bgCanvas.width = this.fgCanvas.width = width;
+        this.bgCanvas.height = this.fgCanvas.height = height;
 
-            this.bgCanvas.width = this.fgCanvas.width = this.width;
-            this.bgCanvas.height = this.fgCanvas.height = this.height;
+        [this.bgCanvas, this.fgCanvas].forEach((c) => {
+            c.style.position = 'absolute';
+            c.style.left = x + 'px';
+            c.style.top = y + 'px';
+            document.body.appendChild(c);
+        });
 
-            this.bgCtx = this.bgCanvas.getContext('2d');
-            this.fgCtx = this.fgCanvas.getContext('2d');
+        this.bgCtx = this.bgCanvas.getContext('2d');
+        this.fgCtx = this.fgCanvas.getContext('2d');
 
-            this.bgCanvas.style.left = this.posX + 'px';
-            this.bgCanvas.style.top = this.posY + 'px';
+        this.init();
+    }
 
-            this.fgCanvas.style.left = this.posX + 'px';
-            this.fgCanvas.style.top = this.posY + 'px';
 
-            document.body.appendChild(this.bgCanvas);
-            document.body.appendChild(this.fgCanvas);
-            this.init();
-        };
+    init() {
+        this.curPiece = { data: null, colors: [], x: 0, y: 0 };
+        this.lastMove = Date.now();
+        this.curSpeed = 50 + Math.random() * 50;
+        this.linesCleared = 0;
+        this.level = 0;
+        this.loseBlock = 0;
 
-        Tetris.prototype.init = function(){
-            this.curPiece = {
-                data : null,
-                colors : [0,0,0],
-                x : 0,
-                y : 0,
-            };
+        this.boardWidth = Math.floor(this.width / this.unitSize);
+        this.boardHeight = Math.floor(this.height / this.unitSize);
 
-            this.lastMove = Date.now();
-            this.curSpeed = 50+Math.random()*50;
-            this.unitSize = 20;
-            this.linesCleared = 0;
-            this.level = 0;
-            this.loseBlock = 0;
-
-            // init the board
-            this.board = [];
-            this.boardWidth =  Math.floor(this.width / this.unitSize);
-            this.boardHeight = Math.floor(this.height / this.unitSize);
-
-            var board       = this.board,
-                boardWidth  = this.boardWidth,
-                boardHeight = this.boardHeight,
-                halfHeight  = boardHeight/2,
-                curPiece    = this.curPiece,
-                x = 0, y = 0;
-
-            // init board
-            for (x = 0; x <= boardWidth; x++) {
-                board[x] = [];
-                for (y = 0; y <= boardHeight; y++) {
-
-                    board[x][y] = {
-                        data: 0,
-                        colors: ['rgb(0,0,0)', 'rgb(0,0,0)', 'rgb(0,0,0)']
+        this.board = [];
+        const halfH = this.boardHeight / 2;
+        for (let x = 0; x < this.boardWidth; x++) {
+            this.board[x] = [];
+            for (let y = 0; y < this.boardHeight; y++) {
+                let cell = { data: 0, colors: ['rgb(0,0,0)', 'rgb(0,0,0)', 'rgb(0,0,0)'] };
+                if (y > halfH && Math.random() > 0.15) {
+                    cell = {
+                        data: 1,
+                        colors: tetrominos[Math.floor(Math.random() * tetrominos.length)].colors,
                     };
-
-                    if(Math.random() > 0.15 && y > halfHeight){
-                        board[x][y] = {
-                            data: 1,
-                            colors: tetrominos[Math.floor(Math.random() * tetrominos.length)].colors
-                        };
-                    }
                 }
+                this.board[x][y] = cell;
             }
+        }
 
-            // collapse the board a bit
-            for (x = 0; x <= boardWidth; x++) {
-                for (y = boardHeight-1; y > -1; y--) {
-
-                    if(board[x][y].data === 0 && y > 0){
-                        for(var yy = y; yy > 0; yy--){
-                            if(board[x][yy-1].data){
-
-                                board[x][yy].data = 1;
-                                board[x][yy].colors = board[x][yy-1].colors;
-
-                                board[x][yy-1].data = 0;
-                                board[x][yy-1].colors = ['rgb(0,0,0)', 'rgb(0,0,0)', 'rgb(0,0,0)'];
-                            }
+        // collapse gaps down
+        for (let x = 0; x < this.boardWidth; x++) {
+            for (let y = this.boardHeight - 1; y > 0; y--) {
+                if (this.board[x][y].data === 0) {
+                    for (let yy = y; yy > 0; yy--) {
+                        if (this.board[x][yy - 1].data === 1) {
+                            this.board[x][yy].data = 1;
+                            this.board[x][yy].colors = this.board[x][yy - 1].colors;
+                            this.board[x][yy - 1].data = 0;
+                            this.board[x][yy - 1].colors = ['rgb(0,0,0)','rgb(0,0,0)','rgb(0,0,0)'];
                         }
                     }
                 }
             }
+        }
 
-            var self = this;
+        window.addEventListener('keydown', (e) => {
+            const p = this.curPiece;
+            switch (e.keyCode) {
+                case 37:
+                    if (this.checkMovement(p, -1, 0)) p.x--;
+                    break;
+                case 39:
+                    if (this.checkMovement(p, 1, 0)) p.x++;
+                    break;
+                case 40:
+                    if (this.checkMovement(p, 0, 1)) p.y++;
+                    break;
+                case 32:
+                case 38:
+                    p.data = this.rotateTetrimono(p);
+                    break;
+            }
+        });
 
-            window.addEventListener('keydown', function (e) {
-                switch (e.keyCode) {
-                    case 37:
-                        if (self.checkMovement(curPiece, -1, 0)) {
-                            curPiece.x--;
-                        }
-                        break;
-                    case 39:
-                        if (self.checkMovement(curPiece, 1, 0)) {
-                            curPiece.x++;
-                        }
-                        break;
-                    case 40:
-                        if (self.checkMovement(curPiece, 0, 1)) {
-                            curPiece.y++;
-                        }
-                        break;
-                    case 32:
-                    case 38:
-                        curPiece.data = self.rotateTetrimono(curPiece);
-                        break;
-                }
-            });
+        this.checkLines();
+        this.renderBoard();
+        this.newTetromino();
+        this.update();
+    }
 
-            // render the board
-            this.checkLines();
-            this.renderBoard();
-
-            // assign the first tetri
+    update() {
+        const p = this.curPiece;
+        if (!this.checkMovement(p, 0, 1)) {
+            if (p.y < -1) {
+                this.loseScreen();
+                return;
+            }
+            this.fillBoard(p);
             this.newTetromino();
-            this.update();
-        };
+        } else if (Date.now() > this.lastMove) {
+            this.lastMove = Date.now() + this.curSpeed;
+            p.y++;
+        }
+        this.render();
+        requestAnimationFrame(() => this.update());
+    }
 
-
-        Tetris.prototype.update = function() {
-            var curPiece = this.curPiece;
-
-            if (!this.checkMovement(curPiece, 0, 1)) {
-                if (curPiece.y < -1) {
-                    // you lose
-                    this.loseScreen();
-                    return true;
-                } else {
-                    this.fillBoard(curPiece);
-                    this.newTetromino();
-                }
-            } else {
-                if (Date.now() > this.lastMove) {
-                    this.lastMove = Date.now() + this.curSpeed;
-                    if (this.checkMovement(curPiece, 0, 1)) {
-                        curPiece.y++;
-                    } else {
-                        this.fillBoard(curPiece);
-                        this.newTetromino();
-                    }
+    renderBoard() {
+        const ctx = this.bgCtx, us = this.unitSize;
+        ctx.clearRect(0, 0, this.width, this.height);
+        for (let x = 0; x < this.boardWidth; x++) {
+            for (let y = 0; y < this.boardHeight; y++) {
+                if (this.board[x][y].data) {
+                    const [c1, c2, c3] = this.board[x][y].colors;
+                    const px = x * us, py = y * us;
+                    ctx.fillStyle = c1; ctx.fillRect(px, py, us, us);
+                    ctx.fillStyle = c2; ctx.fillRect(px + 2, py + 2, us - 4, us - 4);
+                    ctx.fillStyle = c3; ctx.fillRect(px + 4, py + 4, us - 8, us - 8);
                 }
             }
-
-            this.render();
-
-            var self = this;
-            requestAnimationFrame(function(){self.update();});
-        };
-
-// render only the board.
-        Tetris.prototype.renderBoard = function(){
-            var canvas      = this.bgCanvas,
-                ctx         = this.bgCtx,
-                unitSize    = this.unitSize,
-                board       = this.board,
-                boardWidth  = this.boardWidth,
-                boardHeight = this.boardHeight;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (var x = 0; x <= boardWidth; x++) {
-                for (var y = 0; y <= boardHeight; y++) {
-                    if (board[x][y].data !== 0) {
-                        var bX = (x * unitSize),
-                            bY = (y * unitSize);
-
-                        ctx.fillStyle = board[x][y].colors[0];
-                        ctx.fillRect(bX, bY, unitSize, unitSize);
-
-                        ctx.fillStyle = board[x][y].colors[1];
-                        ctx.fillRect(bX+2, bY+2, unitSize-4, unitSize-4);
-
-                        ctx.fillStyle = board[x][y].colors[2];
-                        ctx.fillRect(bX+4, bY+4, unitSize-8, unitSize-8);
-                    }
-                }
-            }
-        };
-
-// Render the current active piece
-        Tetris.prototype.render = function() {
-            var canvas      = this.fgCanvas,
-                ctx         = this.fgCtx,
-                unitSize    = this.unitSize,
-                curPiece    = this.curPiece;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            for (var x = 0; x < 4; x++) {
-                for (var y = 0; y < 4; y++) {
-                    if (curPiece.data[x][y] === 1) {
-                        var xPos = ((curPiece.x + x) * unitSize),
-                            yPos = ((curPiece.y + y) * unitSize);
-
-                        if (yPos > - 1) {
-                            ctx.fillStyle = curPiece.colors[0];
-                            ctx.fillRect(xPos, yPos, unitSize, unitSize);
-
-                            ctx.fillStyle = curPiece.colors[1];
-                            ctx.fillRect(xPos+2, yPos+2, unitSize-4, unitSize-4);
-
-                            ctx.fillStyle = curPiece.colors[2];
-                            ctx.fillRect(xPos+4, yPos+4, unitSize-8, unitSize-8);
-                        }
-                    }
-                }
-            }
-        };
-
-// Make sure we can mov where we want.
-        Tetris.prototype.checkMovement = function(curPiece, newX, newY) {
-            var piece       = curPiece.data,
-                posX        = curPiece.x,
-                posY        = curPiece.y,
-                board       = this.board,
-                boardWidth  = this.boardWidth,
-                boardHeight = this.boardHeight;
-
-            for (var x = 0; x < 4; x++) {
-                for (var y = 0; y < 4; y++) {
-                    if (piece[x][y] === 1) {
-
-                        if (!board[posX + x + newX]) {
-                            board[posX + x + newX] = [];
-                        }
-
-                        if (!board[posX + x + newX][y + posY + newY]) {
-                            board[posX + x + newX][y + posY + newY] = {
-                                data: 0
-                            };
-                        }
-
-                        if (posX + x + newX >= boardWidth || posX + x + newX < 0 || board[posX + x + newX][y + posY + newY].data == 1) {
-                            return false;
-                        }
-
-                        if (posY + y + newY > boardHeight) {
-                            return false;
-                        }
-
-                    }
-                }
-            }
-            return true;
-        };
-
-// checks for completed lines and clears them
-        Tetris.prototype.checkLines = function() {
-            var board           = this.board,
-                boardWidth      = this.boardWidth,
-                boardHeight     = this.boardHeight,
-                linesCleared    = this.linesCleared,
-                level           = this.level,
-                y               = boardHeight+1;
-
-            while (y--) {
-                var x = boardWidth,
-                    lines = 0;
-
-                while (x--) {
-                    if (board[x][y].data === 1) {
-                        lines++;
-                    }
-                }
-
-                if (lines === boardWidth) {
-                    linesCleared++;
-                    level = Math.round(linesCleared / 20) * 20;
-
-                    var lineY = y;
-                    while (lineY) {
-                        for (x = 0; x <= boardWidth; x++) {
-                            if (lineY - 1 > 0) {
-                                board[x][lineY].data = board[x][lineY - 1].data;
-                                board[x][lineY].colors = board[x][lineY - 1].colors;
-                            }
-                        }
-                        lineY--;
-                    }
-                    y++;
-                }
-            }
-        };
-
-// Lose animation
-        Tetris.prototype.loseScreen = function() {
-            var ctx         = this.bgCtx,
-                unitSize    = this.unitSize,
-                boardWidth  = this.boardWidth,
-                boardHeight = this.boardHeight,
-                y           = boardHeight - this.loseBlock;
-
-            for(var x = 0; x < boardWidth; x++){
-                var bX = (x * unitSize),
-                    bY = (y * unitSize);
-
-                ctx.fillStyle = 'rgb(80,80,80)';
-                ctx.fillRect(bX, bY, unitSize, unitSize);
-
-                ctx.fillStyle = 'rgb(150,150,150)';
-                ctx.fillRect(bX+2, bY+2, unitSize-4, unitSize-4);
-
-                ctx.fillStyle = 'rgb(100,100,100)';
-                ctx.fillRect(bX+4, bY+4, unitSize-8, unitSize-8);
-            }
-
-            if(this.loseBlock <= (boardHeight+1)){
-                this.loseBlock++;
-
-                var self = this;
-                requestAnimationFrame(function(){self.loseScreen();});
-            }else{
-                this.init();
-            }
-        };
-
-// adds the piece as part of the board
-        Tetris.prototype.fillBoard = function(curPiece) {
-            var piece = curPiece.data,
-                posX  = curPiece.x,
-                posY  = curPiece.y,
-                board = this.board;
-
-            for (var x = 0; x < 4; x++) {
-                for (var y = 0; y < 4; y++) {
-                    if (piece[x][y] === 1) {
-                        board[x + posX][y + posY].data = 1;
-                        board[x + posX][y + posY].colors = curPiece.colors;
-                    }
-                }
-            }
-
-            this.checkLines();
-            this.renderBoard();
-        };
-
-// rotate a piece
-        Tetris.prototype.rotateTetrimono = function(curPiece) {
-            var rotated = [];
-
-            for (var x = 0; x < 4; x++) {
-                rotated[x] = [];
-                for (var y = 0; y < 4; y++) {
-                    rotated[x][y] = curPiece.data[3 - y][x];
-                }
-            }
-
-            if (!this.checkMovement({
-                data: rotated,
-                x: curPiece.x,
-                y: curPiece.y
-            }, 0, 0)) {
-                rotated = curPiece.data;
-            }
-
-            return rotated;
-        };
-
-// assign the player a new peice
-        Tetris.prototype.newTetromino = function() {
-            var pieceNum = Math.floor(Math.random() * tetrominos.length),
-                curPiece = this.curPiece;
-
-            curPiece.data    = tetrominos[pieceNum].data;
-            curPiece.colors  = tetrominos[pieceNum].colors;
-            curPiece.x       = Math.floor(Math.random()*(this.boardWidth-curPiece.data.length+1));
-            curPiece.y       = -4;
-        };
-
-        var width = window.innerWidth,
-            boardDiv = 20*Math.round(window.innerWidth/20),
-            boards = 8,
-            bWidth = boardDiv/boards,
-            tetrisInstances = [];
-
-        for(var w = 0; w < boards; w++){
-            tetrisInstances.push(new Tetris(20 * Math.round((w*bWidth)/20), 0, bWidth));
         }
     }
 
-    return{start}
+    render() {
+        const ctx = this.fgCtx, us = this.unitSize, p = this.curPiece;
+        ctx.clearRect(0, 0, this.width, this.height);
+        for (let x = 0; x < 4; x++) {
+            for (let y = 0; y < 4; y++) {
+                if (p.data[x][y]) {
+                    const px = (p.x + x) * us, py = (p.y + y) * us;
+                    if (py >= 0) {
+                        ctx.fillStyle = p.colors[0]; ctx.fillRect(px, py, us, us);
+                        ctx.fillStyle = p.colors[1]; ctx.fillRect(px + 2, py + 2, us - 4, us - 4);
+                        ctx.fillStyle = p.colors[2]; ctx.fillRect(px + 4, py + 4, us - 8, us - 8);
+                    }
+                }
+            }
+        }
+    }
 
+    checkMovement(piece, dx, dy) {
+        for (let x = 0; x < 4; x++) {
+            for (let y = 0; y < 4; y++) {
+                if (piece.data[x][y]) {
+                    const nx = piece.x + x + dx;
+                    const ny = piece.y + y + dy;
+                    if (nx < 0 || nx >= this.boardWidth || ny > this.boardHeight) return false;
+                    if (ny >= 0 && this.board[nx][ny].data) return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    checkLines() {
+        for (let y = this.boardHeight - 1; y >= 0; y--) {
+            let full = true;
+            for (let x = 0; x < this.boardWidth; x++) {
+                if (!this.board[x][y].data) { full = false; break; }
+            }
+            if (full) {
+                for (let yy = y; yy > 0; yy--) {
+                    for (let x = 0; x < this.boardWidth; x++) {
+                        this.board[x][yy] = {
+                            data: this.board[x][yy - 1].data,
+                            colors: this.board[x][yy - 1].colors.slice()
+                        };
+                    }
+                }
+                y++;
+            }
+        }
+    }
+
+    loseScreen() {
+        const ctx = this.bgCtx, us = this.unitSize, w = this.boardWidth;
+        const row = this.boardHeight - 1 - this.loseBlock;
+        for (let x = 0; x < w; x++) {
+            const px = x * us, py = row * us;
+            ctx.fillStyle = 'rgb(80,80,80)'; ctx.fillRect(px, py, us, us);
+            ctx.fillStyle = 'rgb(150,150,150)'; ctx.fillRect(px + 2, py + 2, us - 4, us - 4);
+            ctx.fillStyle = 'rgb(100,100,100)'; ctx.fillRect(px + 4, py + 4, us - 8, us - 8);
+        }
+        if (this.loseBlock < this.boardHeight) {
+            this.loseBlock++;
+            requestAnimationFrame(() => this.loseScreen());
+        } else this.init();
+    }
+
+    fillBoard(piece) {
+        for (let x = 0; x < 4; x++) {
+            for (let y = 0; y < 4; y++) {
+                if (piece.data[x][y]) {
+                    const px = piece.x + x;
+                    const py = piece.y + y;
+                    if (py >= 0) {
+                        this.board[px][py].data = 1;
+                        this.board[px][py].colors = piece.colors.slice();
+                    }
+                }
+            }
+        }
+        this.checkLines();
+        this.renderBoard();
+    }
+
+    rotateTetrimono(piece) {
+        const size = 4;
+        const r = Array.from({ length: size }, () => []);
+        for (let x = 0; x < size; x++) {
+            for (let y = 0; y < size; y++) {
+                r[x][y] = piece.data[size - 1 - y][x];
+            }
+        }
+        return this.checkMovement({ data: r, x: piece.x, y: piece.y }, 0, 0)
+            ? r
+            : piece.data;
+    }
+
+    newTetromino() {
+        const idx = Math.floor(Math.random() * tetrominos.length);
+        this.curPiece.data = tetrominos[idx].data;
+        this.curPiece.colors = tetrominos[idx].colors.slice();
+        this.curPiece.x = Math.floor(Math.random() * (this.boardWidth - 4));
+        this.curPiece.y = -4;
+    }
 }
-export default Js;
+
+export default function createTetris() {
+    let canvases = [];
+
+    function clearAll() {
+        canvases.forEach(c => {
+            if (c.parentNode) c.parentNode.removeChild(c);
+        });
+        canvases = [];
+    }
+    function start() {
+        clearAll();
+        const unitSize = 20;
+        const boards   = 6;
+
+        // 1) how many cells cover the full window?
+        // never overshoot width, clamp both axes
+        const totalCellsX = Math.floor(window.innerWidth / unitSize);
+        const totalCellsY = Math.ceil(window.innerHeight / unitSize);
+
+        const baseCells = Math.floor(totalCellsX / boards);
+        const extraCells = totalCellsX % boards;
+
+        let xOffsetCells = 0;
+
+        for (let i = 0; i < boards; i++) {
+            const cellsThisBoard = baseCells + (i < extraCells ? 1 : 0);
+            const bWidthPx = cellsThisBoard * unitSize;
+            const bHeightPx = totalCellsY * unitSize;
+            const xPx = xOffsetCells * unitSize;
+
+            const t = new Tetris(xPx, 0, bWidthPx, bHeightPx);
+            // track both canvases
+            canvases.push(t.bgCanvas, t.fgCanvas);
+
+            xOffsetCells += cellsThisBoard;
+        }
+        window.addEventListener('resize', start);
+    }
+
+    return { start };
+}
