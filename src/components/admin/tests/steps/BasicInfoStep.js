@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Card, Form, Input, InputNumber, Button, List } from 'antd';
+import { Row, Col, Card, Form, Input, InputNumber, Button, List,Tooltip  } from 'antd';
 import { FileTextOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import CreateTaskDrawer from '../drawers/CreateTaskDrawer';
 import { motion } from 'framer-motion';
@@ -25,7 +25,17 @@ const BasicInfoStep = ({
     <>
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
             <Button onClick={onBack}>Back</Button>
-            <Button type="primary" onClick={onNext}>Next: Groups</Button>
+            <Tooltip title={!activeTask ? 'You have to select a task' : ''}>
+    <span>
+        <Button
+            type="primary"
+            onClick={onNext}
+            disabled={!activeTask}
+        >
+        Next: Groups
+      </Button>
+    </span>
+            </Tooltip>
         </div>
         <Row gutter={16}>
             <Col span={12}>

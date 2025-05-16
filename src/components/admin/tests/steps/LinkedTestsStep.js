@@ -155,7 +155,7 @@ const LinkedTestsStep = ({
                                                 />
                                             </List.Item>
                                         </motion.div>
-                                        <Divider  />
+                                        <Divider   />
                                     </motion.div>
                                 );
                             }}

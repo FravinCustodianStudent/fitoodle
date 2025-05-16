@@ -18,11 +18,12 @@ const TestManagementStep = ({
                                 questionConfigs,
                                 questionGroups,
                                 onBack,
-                                onComplete
+                                onComplete,
+    navigate
                             }) => {
     const { POST,PUT } = useHttp();
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
+
     const [localConfigs, setLocalConfigs] = useState(questionConfigs);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [editingConfig, setEditingConfig] = useState(null);
@@ -108,11 +109,15 @@ const TestManagementStep = ({
                         const newTestConfigId = res.data.id;
                         // update the task to link with this new test config
                         const updatedTask = { ...activeTask, testId: newTestConfigId };
-                        return PUT({}, `taskresource/tasks/${activeTask.id}`, {}, updatedTask);
+                        return PUT({}, `taskresource/tasks/${activeTask.id}`, {}, updatedTask)
+                            .then(()=>{
+                                message.success('Test created and linked successfully');
+                                const path = `/admin/courses?courseId=${courseId}`
+                                navigate(path,{ replace: true });
+                            });
                     })
                     .then(() => {
-                        message.success('Test created and linked successfully');
-                        navigate(`/admin/questions?courseId=${courseId}`);
+
                         if (onComplete) onComplete();
                     })
                     .catch(() => {

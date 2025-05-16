@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import {useNavigate, useSearchParams} from 'react-router-dom';
 import { Steps, Modal, Form, Select, Alert, Button } from 'antd';
-import { BookOutlined, EditOutlined } from '@ant-design/icons';
+import {ArrowLeftOutlined, BookOutlined, EditOutlined} from '@ant-design/icons';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { useCourseService } from '../services/useCourseService';
@@ -46,6 +46,7 @@ const QuestionsAdmin = () => {
     const [isTaskDrawerVisible, setIsTaskDrawerVisible] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [eduCourseId, setEduCourseId] = useState(null);
+    const navigate = useNavigate();
     // Step 2 — Groups
     const [questionGroups, setQuestionGroups] = useState([]);
     const [isGroupDrawerVisible, setIsGroupDrawerVisible] = useState(false);
@@ -79,7 +80,7 @@ const QuestionsAdmin = () => {
     // Load initial data
     useEffect(() => {
         fetchCourseList();
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         const courseIdParam = searchParams.get('courseId');
@@ -213,6 +214,9 @@ const QuestionsAdmin = () => {
         setCurrentGroup(null);
         setIsGroupDrawerVisible(false);
     };
+    const returnHandler = () =>{
+        navigate("/admin")
+    }
 
     const handleGroupDrawerSubmit = () => {
         drawerForm.validateFields().then((values) => {
@@ -359,6 +363,7 @@ const QuestionsAdmin = () => {
                             finalTestData={finalTestData}
                             activeTask={tasks.find(t => t.id === finalTestData.taskId)}
                             onAddConfig={handleAddConfig}
+                            navigate={navigate}
                             questionGroups={questionGroups}
                             onDeleteConfig={handleDeleteConfig}
                             onUpdateConfig={handleUpdateConfig}
@@ -371,8 +376,17 @@ const QuestionsAdmin = () => {
             <Modal
                 title="Select Course"
                 open={isCourseModalVisible}
-                onOk={handleCourseModalOk}
-                onCancel={handleCourseModalCancel}
+                footer={[
+                    <Button type={"dashed"} icon={<ArrowLeftOutlined />} key="custom" onClick={returnHandler}>
+                        Back
+                    </Button>,
+                    <Button key="cancel" onClick={handleCourseModalCancel}>
+                        Cancel
+                    </Button>,
+                    <Button key="ok" type="primary" onClick={handleCourseModalOk}>
+                        OK
+                    </Button>,
+                ]}
                 destroyOnClose
             >
                 <Form form={courseForm} layout="vertical">

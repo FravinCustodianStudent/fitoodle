@@ -29,12 +29,13 @@ import {
     CheckCircleOutlined,
     ExperimentOutlined,
     ReloadOutlined,
-    HddOutlined,
+    HddOutlined,CheckOutlined,
     NotificationOutlined,
-    TeamOutlined,
+    TeamOutlined, ArrowLeftOutlined,
 } from '@ant-design/icons'
 import { format, startOfWeek, addDays } from 'date-fns'
 import { useHttp } from '../../../hooks/http.hook'
+import {useNavigate} from "react-router-dom";
 
 const { Title } = Typography
 
@@ -50,7 +51,7 @@ const timeSlots = [
 
 const LessonSchedule = () => {
     const { GET, POST } = useHttp()
-
+    const navigate = useNavigate();
     // Groups
     const [groups, setGroups] = useState([])
     const [selectedGroup, setSelectedGroup] = useState(null)
@@ -323,7 +324,7 @@ const LessonSchedule = () => {
 
             <Modal
                 visible={!selectedGroup}
-                title="Выберите группу"
+                title="Choose Group"
                 centered
                 closable={false}
                 footer={null}
@@ -363,8 +364,16 @@ const LessonSchedule = () => {
                 />
                 <div style={{ textAlign: 'right', marginTop: 16 }}>
                     <Button
+                        type="dashed"
+                        icon={<ArrowLeftOutlined />}
+                        style={{ marginRight: 12 }}
+                        onClick={() => navigate("/admin")}
+                    >
+                        Back
+                    </Button>
+                    <Button
                         type="primary"
-                        icon={<ReloadOutlined />}
+                        icon={<CheckOutlined />}
                         disabled={!tempSelectedGroup}
                         onClick={() => setSelectedGroup(tempSelectedGroup)}
                     >
