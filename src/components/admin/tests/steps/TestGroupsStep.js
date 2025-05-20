@@ -15,6 +15,7 @@ import {
     message,
     Avatar,
     Upload,
+    Spin,
 } from 'antd';
 import {
     FolderOpenOutlined,
@@ -63,6 +64,9 @@ const TestGroupsStep = ({ onBack, onNext }) => {
     const [editingQuestion, setEditingQuestion] = useState(null);
 
     const [removingFileIds, setRemovingFileIds] = useState([]);
+
+    // Стан для loader-ів зображень
+    const [imageLoading, setImageLoading] = useState({}); // questionId: boolean
 
     // ─── Load groups ──────────────────────────────────────
     useEffect(() => {
@@ -265,7 +269,6 @@ const TestGroupsStep = ({ onBack, onNext }) => {
         }
     };
 
-    // ← updated → pull name/questionText via validateFields
     const handleQuestionSave = async () => {
         let vals;
         try {
@@ -356,6 +359,7 @@ const TestGroupsStep = ({ onBack, onNext }) => {
         }
     };
 
+    // --- ВІДМАЛЬОВКА
     return (
         <>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -409,9 +413,39 @@ const TestGroupsStep = ({ onBack, onNext }) => {
                                     <Card
                                         key={q.id}
                                         style={{ width: 300 }}
-                                        cover={q.attachmentUrl && (
-                                            <img alt={q.name} src={getDriveThumbnailUrl(q.attachmentUrl)} style={{ maxWidth: '100%' }} />
-                                        )}
+                                        cover={
+                                            q.attachmentUrl && (
+                                                <div style={{ position: 'relative', minHeight: 180, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    {imageLoading[q.id] && (
+                                                        <Spin
+                                                            indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />}
+                                                            style={{
+                                                                position: 'absolute',
+                                                                left: 0, right: 0, top: 0, bottom: 0,
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2
+                                                            }}
+                                                        />
+                                                    )}
+                                                    <img
+                                                        alt={q.name}
+                                                        src={getDriveThumbnailUrl(q.attachmentUrl)}
+                                                        style={{
+                                                            maxWidth: '100%',
+                                                            opacity: imageLoading[q.id] ? 0.4 : 1,
+                                                            transition: 'opacity 0.2s'
+                                                        }}
+                                                        onLoad={() => setImageLoading(l => ({ ...l, [q.id]: false }))}
+                                                        onError={() => setImageLoading(l => ({ ...l, [q.id]: false }))}
+                                                        draggable={false}
+                                                        ref={img => {
+                                                            if (img && typeof imageLoading[q.id] === 'undefined') {
+                                                                setImageLoading(l => ({ ...l, [q.id]: true }));
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                            )
+                                        }
                                         actions={[
                                             <EditOutlined onClick={() => openQuestionDrawer(q)} />,
                                             <Popconfirm title="Delete?" onConfirm={() => handleDeleteQuestion(q.id)}>
@@ -435,7 +469,7 @@ const TestGroupsStep = ({ onBack, onNext }) => {
             </Row>
 
             <Modal
-                visible={groupModalVisible}
+                open={groupModalVisible}
                 title={editingGroup ? 'Edit Group' : 'Create Group'}
                 onCancel={() => setGroupModalVisible(false)}
                 onOk={handleGroupSubmit}
@@ -450,7 +484,7 @@ const TestGroupsStep = ({ onBack, onNext }) => {
             <Drawer
                 title={editingQuestion ? 'Edit Question' : 'Create Question'}
                 width={600}
-                visible={questionDrawerVisible}
+                open={questionDrawerVisible}
                 onClose={() => setQuestionDrawerVisible(false)}
                 destroyOnClose
                 footer={(

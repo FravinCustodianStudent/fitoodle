@@ -1,6 +1,8 @@
 import {HandySvg} from "handy-svg";
 import timerSrc from "../../assets/timer.svg";
 import "./testPage.scss";
+import { Modal } from 'antd';
+import { useBlocker, UNSAFE_NavigationContext } from 'react-router-dom';
 
 import QuestionItem from "./questionItem/questionItem";
 import questionSrc from "../../assets/question.svg";
@@ -10,7 +12,7 @@ import ResultItem from "./questionItem/resultItem";
 import {Collapse, Descriptions, Divider, Typography} from 'antd'
 import CircularResult from "./circular result/circularResult";
 
-import {useEffect, useState} from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import {useDispatch, useSelector} from "react-redux";
 import {useParams, useSearchParams} from "react-router-dom";
 import {useHttp} from "../../hooks/http.hook";
@@ -19,8 +21,83 @@ import {Oval} from "react-loader-spinner";
 import { Image } from 'antd';
 const { Panel } = Collapse
 const { Title, Text, Link } = Typography
+/**
+ * Blocks React Router navigation and shows an Antd Modal.
+ * @param {boolean} when - whether to block navigation
+ * @param {string} message - confirmation message
+ */
+export function useAntdBlocker(when, message = "Ви втратите свої відповіді та тест буде зарахований як невиконаний. Вийти?") {
+    const { navigator } = useContext(UNSAFE_NavigationContext);
+    const [showModal, setShowModal] = useState(false);
+    const nextLocation = useRef(null);
+
+    useEffect(() => {
+        if (!when) return;
+
+        const push = navigator.push;
+
+        navigator.push = (...args) => {
+            nextLocation.current = args;
+            setShowModal(true);
+        };
+
+        return () => {
+            navigator.push = push;
+        };
+    }, [when, navigator]);
+
+    const handleOk = useCallback(() => {
+        setShowModal(false);
+        if (nextLocation.current) {
+            const push = navigator.push;
+            navigator.push = (...args) => { push(...args); };
+            navigator.push(...nextLocation.current);
+        }
+    }, [navigator]);
+
+    const handleCancel = useCallback(() => {
+        setShowModal(false);
+        nextLocation.current = null;
+    }, []);
+
+    return {
+        modal: (
+            <Modal
+                open={showModal}
+                onOk={handleOk}
+                onCancel={handleCancel}
+                okText="Так, залишити сторінку"
+                cancelText="Скасувати"
+                closable={false}
+            >
+                {message}
+            </Modal>
+        )
+    };
+}
+function usePrompt(message, when) {
+    const { navigator } = useContext(UNSAFE_NavigationContext);
+
+    useEffect(() => {
+        if (!when) return;
+
+        const push = navigator.push;
+        navigator.push = (...args) => {
+            if (window.confirm(message)) {
+                navigator.push = push;
+                push(...args);
+            }
+        };
+
+        return () => {
+            navigator.push = push;
+        };
+    }, [when, message, navigator]);
+
+}
 const TestPage = () =>{
     const [typeOfElement, setTypeOfElement] = useState("s");
+
     const dispatch = useDispatch();
     const {taskId,testId} = useParams();
     const [Loading, setLoading] = useState(true);
@@ -35,6 +112,10 @@ const TestPage = () =>{
     const {GET,POST} = useHttp();
     const [eliminationTimer, setEliminationTimer] = useState("");
     const [testResult, setTestResult] = useState()
+    const { modal } = useAntdBlocker(
+        !Loading && typeOfElement !== "results", // Only block if test in progress
+        "Ви втратите свої відповіді та тест буде зарахований як невиконаний. Вийти?"
+    );
     useEffect(() => {
         if (user!==null && Object.keys(user).length !==0){
             GET({taskId:taskId},"testingresource/testConfigs/by/task",{Authorization:localStorage.getItem("jwt")})
@@ -55,6 +136,20 @@ const TestPage = () =>{
         }
 
     }, [user]);
+    useEffect(() => {
+        if (Loading) return; // Don't block if still loading
+
+        const handleBeforeUnload = (e) => {
+            e.preventDefault();
+            e.returnValue = 'Ви втратите свої відповіді та тест буде зарахований як невиконаний. Вийти?';
+            return e.returnValue;
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [Loading]);
     // Helpers for Google Drive thumbnail URLs
     function getDriveFileId(url) {
         const m = url.match(/\/d\/([^/]+)\//);
@@ -354,18 +449,22 @@ const TestPage = () =>{
 
     }
     return(
-        <div className="question">
-            {Loading ? <div className="oval__loader"><Oval
-                visible={true}
-                height="120"
-                width="120"
-                color="#D90429"
-                secondaryColor="#2B2D42"
-                ariaLabel="oval-loading"
-                wrapperStyle={{}}
-                wrapperClass=""
-            /></div>  : containerSwitcher(typeOfElement)}
-        </div>
+        <>
+            {modal}
+            <div className="question">
+                {Loading ? <div className="oval__loader"><Oval
+                    visible={true}
+                    height="120"
+                    width="120"
+                    color="#D90429"
+                    secondaryColor="#2B2D42"
+                    ariaLabel="oval-loading"
+                    wrapperStyle={{}}
+                    wrapperClass=""
+                /></div>  : containerSwitcher(typeOfElement)}
+            </div>
+        </>
+
     )
 }
 

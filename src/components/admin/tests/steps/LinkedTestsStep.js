@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {Row, Col, Card, Button, List, Spin, Descriptions, Tag, Divider} from 'antd';
+import { Row, Col, Card, Button, List, Spin, Descriptions, Tag, Divider, Empty } from 'antd';
 import { motion } from 'framer-motion';
 import { useHttp } from '../../../../hooks/http.hook';
 import { CalendarOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+
 const LinkedTestsStep = ({
                              eduCourseId,
                              selectedTest,
@@ -99,7 +100,7 @@ const LinkedTestsStep = ({
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span>All Linked Tests</span>
                                 <Button type="primary" onClick={onCreateClick}>
-                                    Create Task
+                                    Create Test
                                 </Button>
                             </div>
                         }
@@ -155,7 +156,7 @@ const LinkedTestsStep = ({
                                                 />
                                             </List.Item>
                                         </motion.div>
-                                        <Divider   />
+                                        <Divider />
                                     </motion.div>
                                 );
                             }}
@@ -172,70 +173,72 @@ const LinkedTestsStep = ({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <Card title={title} variant="borderless" style={{ marginBottom: 16 }}>
-                        <p><strong>Description:</strong> {description}</p>
-                        <p><strong>Deadline:</strong> {deadline}</p>
-                        <Divider orientation="left">Test Results</Divider>
-                        <Row gutter={[16, 16]}>
-                            {viewResults.map(result => {
-                                const name = result.user
-                                    ? `${result.user.firstName} ${result.user.lastName}`
-                                    : 'Unknown Student';
+                    {!selectedTest?.id ? (
+                        <Card style={{ minHeight: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Empty description="Не обрано тест" />
+                        </Card>
+                    ) : (
+                        <Card title={title} variant="borderless" style={{ marginBottom: 16 }}>
+                            <p><strong>Description:</strong> {description}</p>
+                            <p><strong>Deadline:</strong> {deadline}</p>
+                            <Divider orientation="left">Test Results</Divider>
+                            <Row gutter={[16, 16]}>
+                                {viewResults.map(result => {
+                                    const name = result.user
+                                        ? `${result.user.firstName} ${result.user.lastName}`
+                                        : 'Unknown Student';
 
-                                return (
-                                    <Col xs={24} sm={12} key={result.id || result.studentId}>
-                                        <Card
-
-                                            type="inner"
-                                            hoverable
-                                            title={name}
-                                        >
-                                            <Card.Meta
-                                                description={
-                                                    <Descriptions
-                                                        column={1}
-                                                        size="small"
-                                                        bordered={true}
-                                                    >
-                                                        <Descriptions.Item label="Completed">
-                                                            {result.completed ? (
-                                                                <Tag icon={<CheckCircleOutlined />} color="success">
-                                                                    Yes
-                                                                </Tag>
-                                                            ) : (
-                                                                <Tag icon={<CloseCircleOutlined />} color="error">
-                                                                    No
-                                                                </Tag>
-                                                            )}
-                                                        </Descriptions.Item>
-
-                                                        <Descriptions.Item label="Completion Time">
-                                                            {result.completionTime ? (
-                                                                <>
-                                                                    <CalendarOutlined style={{ marginRight: 4 }} />
-                                                                    {new Date(result.completionTime).toLocaleString()}
-                                                                </>
-                                                            ) : (
-                                                                '-'
-                                                            )}
-                                                        </Descriptions.Item>
-
-                                                        <Descriptions.Item label="Mark">
-                                                            {result.markValue}
-                                                        </Descriptions.Item>
-
-                                                        <Descriptions.Item label="Comment">
-                                                            {result.comment}
-                                                        </Descriptions.Item>
-                                                    </Descriptions>
-                                                }
-                                            />
-                                        </Card>
-                                    </Col>
-                                );
-                            })}
-                        </Row>
-                    </Card>
+                                    return (
+                                        <Col xs={24} sm={12} key={result.id || result.studentId}>
+                                            <Card
+                                                type="inner"
+                                                hoverable
+                                                title={name}
+                                            >
+                                                <Card.Meta
+                                                    description={
+                                                        <Descriptions
+                                                            column={1}
+                                                            size="small"
+                                                            bordered={true}
+                                                        >
+                                                            <Descriptions.Item label="Completed">
+                                                                {result.completed ? (
+                                                                    <Tag icon={<CheckCircleOutlined />} color="success">
+                                                                        Yes
+                                                                    </Tag>
+                                                                ) : (
+                                                                    <Tag icon={<CloseCircleOutlined />} color="error">
+                                                                        No
+                                                                    </Tag>
+                                                                )}
+                                                            </Descriptions.Item>
+                                                            <Descriptions.Item label="Completion Time">
+                                                                {result.completionTime ? (
+                                                                    <>
+                                                                        <CalendarOutlined style={{ marginRight: 4 }} />
+                                                                        {new Date(result.completionTime).toLocaleString()}
+                                                                    </>
+                                                                ) : (
+                                                                    '-'
+                                                                )}
+                                                            </Descriptions.Item>
+                                                            <Descriptions.Item label="Mark">
+                                                                {result.markValue}
+                                                            </Descriptions.Item>
+                                                            <Descriptions.Item label="Comment">
+                                                                {result.comment}
+                                                            </Descriptions.Item>
+                                                        </Descriptions>
+                                                    }
+                                                />
+                                            </Card>
+                                        </Col>
+                                    );
+                                })}
+                            </Row>
+                        </Card>
+                    )}
                 </motion.div>
             </Col>
         </Row>

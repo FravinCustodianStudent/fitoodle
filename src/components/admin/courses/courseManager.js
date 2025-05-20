@@ -383,7 +383,7 @@ const CreateCourseDrawer = ({ visible, onClose, onCreate }) => {
                 width={400}
             >
                 <List
-                    dataSource={availableLaborants}
+                    dataSource={availableLaborants.filter(l => !selectedTeacher || l.id !== selectedTeacher.id)}
                     renderItem={(laborant) => (
                         <List.Item
                             actions={[
@@ -867,8 +867,12 @@ const CourseManagerPage = () => {
                             icon={<PlusCircleOutlined className="red-icon" />}
                             type="primary"
                             style={{ marginTop: 16 }}
-                            onClick={()=>{
-                                navigate("/admin/questions")
+                            onClick={() => {
+                                if (selectedCourse?.id) {
+                                    navigate(`/admin/questions?courseId=${selectedCourse.id}`);
+                                } else {
+                                    message.warning('Please select a course first!');
+                                }
                             }}
                         >
                             Create New Test
@@ -910,8 +914,12 @@ const CourseManagerPage = () => {
                             icon={<PlusCircleOutlined className="red-icon" />}
                             type="primary"
                             style={{ marginTop: 16 }}
-                            onClick={()=>{
-                                navigate("/admin/tasks")
+                            onClick={() => {
+                                if (selectedCourse?.id) {
+                                    navigate(`/admin/tasks?courseId=${selectedCourse.id}`);
+                                } else {
+                                    message.warning('Please select a course first!');
+                                }
                             }}
                         >
                             Create New Task
